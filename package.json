@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@forge/cli": "^6.20.2"
+  }
+}

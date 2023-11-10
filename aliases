@@ -1,0 +1,3 @@
+export FORGE_EMAIL="TODO"
+export FORGE_API_TOKEN="TODO"
+alias forge="npx forge"
