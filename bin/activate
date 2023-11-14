@@ -1,0 +1,3 @@
+#!/bin/sh
+npx dotenv-export
+echo 'alias forge="npx forge"'

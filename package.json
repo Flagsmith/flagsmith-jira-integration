@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@forge/cli": "^6.20.2"
+    "@forge/cli": "6.20.2",
+    "dotenv-export": "2.0.0"
   }
 }
