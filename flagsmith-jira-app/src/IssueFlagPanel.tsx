@@ -16,8 +16,6 @@ import ForgeUI, {
   Select,
   StatusLozenge,
   Table,
-  Tag,
-  TagGroup,
   Text,
   useEffect,
   useState,
@@ -102,9 +100,6 @@ const IssueFlagTable = ({
                 {feature.description ? ": " : ""}
                 {feature.description}
               </Heading>
-              <TagGroup>
-                <Tag color="blue-light" text="boop" />
-              </TagGroup>
               <Table>
                 <Head>
                   <Cell>
