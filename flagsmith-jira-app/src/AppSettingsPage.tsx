@@ -103,8 +103,6 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
 
   const organisation = organisations.find((each) => String(each.id) === String(organisationId));
 
-  // TODO should not put the API key back into the password box, use a sentinel value instead?
-
   return (
     <Form
       onSubmit={onSave}
