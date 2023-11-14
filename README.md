@@ -21,7 +21,7 @@ Ensure you are using the correct Node.js version before executing any other comm
 
 ### Install the Forge CLI
 
-Forge instructions start by [installing the CLI globally](https://developer.atlassian.com/platform/forge/getting-started/#install-the-forge-cli) but instead we will use a local installation with pinned requirements.
+Forge instructions start by [installing the CLI globally](https://developer.atlassian.com/platform/forge/getting-started/#install-the-forge-cli) but instead we will use a local installation with pinned requirements:
 
     npm ci
 
