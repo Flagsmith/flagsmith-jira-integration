@@ -271,8 +271,6 @@ const IssueFlagPanel = ({
   const onRemove = (featureId: string) =>
     onChange(featureIds.filter((each) => String(each) !== featureId));
 
-  // TODO make a glance/context thing to show if a single flag is on in e.g. production env?
-
   return (
     <Fragment>
       {/* <Text>{JSON.stringify(flags)}</Text> */}
