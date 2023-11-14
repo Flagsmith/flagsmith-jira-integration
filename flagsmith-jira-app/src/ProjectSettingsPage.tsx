@@ -144,8 +144,8 @@ export default () => {
   const jiraContext = useJiraContext();
   const [projectId, setProjectId] = useState(() => readProjectId(jiraContext));
   // get permissions
-  // TODO if it's not possible to view project settings without editing them,
-  // this check and the canAdmin=false UI can be removed
+  // TODO check if it'spossible to view project settings without editing them,
+  // and if not, this check and the canAdmin=false UI can be removed
   const [canAdmin, setCanAdmin] = useState(() => canAdminProject(jiraContext));
   return (
     <ProjectSettingsPage>

@@ -1,4 +1,4 @@
-import api, { Route, route } from "@forge/api";
+import api, { APIResponse, Route, assumeTrustedRoute, route } from "@forge/api";
 
 import { ApiError } from "./common";
 
@@ -35,8 +35,8 @@ export type FlagModel = Model & {
 
 type PaginatedModels<TModel extends Model> = {
   count: number;
-  next: string;
-  previous: string;
+  next: string | null;
+  previous: string | null;
   results: TModel[];
 };
 
@@ -46,20 +46,41 @@ const flagsmithApi = async (apiKey: string, route: Route): Promise<unknown> => {
   try {
     const url = `${API_V1}${route.value}`;
     console.debug("GET", url);
-    const res = await api.fetch(url, {
+    const response = await api.fetch(url, {
       headers: {
         Accept: "application/json",
         // TODO change to Api-Key ${apiKey} (for RBAC tokens) before official release
         Authorization: `Token ${apiKey}`,
       },
     });
-    const data = await res.json();
+    checkResponse(response);
+    const data = await response.json();
     console.debug(JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
     console.error(error);
     throw new ApiError(error.message, error.code);
   }
+};
+
+const checkResponse = (response: APIResponse): void => {
+  if (!response.ok) {
+    throw new ApiError("Unexpected Flagsmith API response", response.status);
+  }
+};
+
+const unpaginate = async <TModel extends Model>(
+  apiKey: string,
+  data: PaginatedModels<TModel>,
+): Promise<TModel[]> => {
+  let pageData = data;
+  const results = pageData?.results ?? [];
+  while (pageData.next) {
+    const nextPath = assumeTrustedRoute(pageData.next.slice(API_V1.length));
+    pageData = (await flagsmithApi(apiKey, nextPath)) as PaginatedModels<TModel>;
+    results.push(...(pageData?.results ?? []));
+  }
+  return results;
 };
 
 const checkApiKey = (apiKey: string): void => {
@@ -74,8 +95,9 @@ export const fetchOrganisations = async ({
   checkApiKey(apiKey);
   const path = route`/organisations/`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<OrganisationModel>;
-  // TODO pagination handling
-  return data?.results ?? [];
+  const results = await unpaginate(apiKey, data);
+  if (results.length === 0) throw new ApiError("Flagsmith user has no organisations", 404);
+  return results;
 };
 
 export const fetchProjects = async ({
@@ -89,6 +111,7 @@ export const fetchProjects = async ({
   if (!organisationId) throw new ApiError("Flagsmith organisation not configured", 400);
   const path = route`/projects/?organisation=${organisationId}`;
   const data = (await flagsmithApi(apiKey, path)) as ProjectModel[];
+  // do not unpaginate as this API does not do pagination
   const results = data ?? [];
   if (results.length === 0) throw new ApiError("Flagsmith organisation has no projects", 404);
   return results;
@@ -105,8 +128,7 @@ export const fetchEnvironments = async ({
   if (!projectId) throw new ApiError("Flagsmith project not configured", 400);
   const path = route`/environments/?project=${projectId}`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<EnvironmentModel>;
-  // TODO pagination handling
-  const results = data?.results ?? [];
+  const results = await unpaginate(apiKey, data);
   if (results.length === 0) throw new ApiError("Flagsmith project has no environments", 404);
   return results;
 };
@@ -122,8 +144,7 @@ export const fetchFeatures = async ({
   if (!projectId) throw new ApiError("Flagsmith project not configured", 400);
   const path = route`/projects/${projectId}/features/`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<FeatureModel>;
-  // TODO pagination handling
-  const results = data?.results ?? [];
+  const results = await unpaginate(apiKey, data);
   if (results.length === 0) throw new ApiError("Flagsmith project has no features", 404);
   return results;
 };
@@ -139,6 +160,5 @@ export const fetchFlags = async ({
   if (!environmentId) throw new ApiError("Flagsmith environment not configured", 400);
   const path = route`/features/featurestates/?environment=${environmentId}`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<FlagModel>;
-  // TODO pagination handling
-  return data?.results ?? [];
+  return await unpaginate(apiKey, data);
 };

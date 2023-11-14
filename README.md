@@ -37,7 +37,7 @@ Create or use an existing Atlassian API token to log in to the CLI. The CLI uses
 1. Click Create.
 1. Click Copy to clipboard and close the dialog.
 
-TODO Work out whether each developer uses their own API token or whether this comes from the Flagsmith Jira account.
+TODO work out whether each developer uses their own API token or whether this comes from the Flagsmith Jira account.
 
 The `forge login` command attempts to store credentials in your operating system keychain and may not work on all platforms. So we will skip this command and set environment variables instead.
 

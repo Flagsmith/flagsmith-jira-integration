@@ -50,8 +50,11 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
       // update form state
       setOrganisations(organisations);
     } catch (error) {
-      // ignore 401 error (invalid API key) as that is handled by this form
-      if (!Object.prototype.hasOwnProperty.call(error, "code") || error.code !== 401) {
+      // ignore 401 (invalid API key) and 404 (no organisations) as that is handled by this form
+      if (
+        !Object.prototype.hasOwnProperty.call(error, "code") ||
+        ![401, 404].includes(error.code)
+      ) {
         setError(error);
       }
       setOrganisations([]);
