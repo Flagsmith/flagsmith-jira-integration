@@ -24,7 +24,15 @@ import ForgeUI, {
 } from "@forge/ui";
 
 import { ErrorWrapper, useJiraContext } from "./common";
-import { Model, fetchEnvironments, fetchFeatures, fetchFlags } from "./flagsmith";
+import {
+  EnvironmentModel,
+  FeatureModel,
+  FeatureStateValue,
+  FlagModel,
+  fetchEnvironments,
+  fetchFeatures,
+  fetchFlags,
+} from "./flagsmith";
 import { canEditIssue, readFeatureIds, readProjectId, writeFeatureIds } from "./jira";
 import { readApiKey, readOrganisationId } from "./storage";
 
@@ -32,7 +40,7 @@ import { readApiKey, readOrganisationId } from "./storage";
 ForgeUI;
 
 type IssueFlagFormProps = {
-  features: Model[];
+  features: FeatureModel[];
   featureIds: string[];
   onAdd: (featureId: string) => Promise<void>;
 };
@@ -52,7 +60,7 @@ const IssueFlagForm = ({ features, featureIds, onAdd }: IssueFlagFormProps) => {
             aria-required={true}
           >
             {addableFeatures.map((feature) => (
-              <Option label={feature.name} value={String(feature.id)} />
+              <Option key={String(feature.id)} label={feature.name} value={String(feature.id)} />
             ))}
           </Select>
         </Form>
@@ -62,9 +70,9 @@ const IssueFlagForm = ({ features, featureIds, onAdd }: IssueFlagFormProps) => {
 };
 
 type IssueFlagTableProps = {
-  environments: Model[];
-  features: Model[];
-  flags: Record<string, Model[]>;
+  environments: EnvironmentModel[];
+  features: FeatureModel[];
+  flags: Record<string, FlagModel[]>;
   featureIds: string[];
   onRemove: (featureId: string) => Promise<void>;
   canEdit: boolean;
@@ -91,14 +99,12 @@ const IssueFlagTable = ({
             <Fragment key={featureId}>
               <Heading size="small">
                 {feature.name}
-                {!!feature.description && ": "}
+                {feature.description ? ": " : ""}
                 {feature.description}
-                <Text>
-                  <TagGroup>
-                    <Tag color="blue-light" text="boop" />
-                  </TagGroup>
-                </Text>
               </Heading>
+              <TagGroup>
+                <Tag color="blue-light" text="boop" />
+              </TagGroup>
               <Table>
                 <Head>
                   <Cell>
@@ -121,21 +127,21 @@ const IssueFlagTable = ({
                     (each) =>
                       String(each.feature) === String(featureId) &&
                       each.feature_segment === null &&
-                      each.identity === null
+                      each.identity === null,
                   );
                   if (!flag) return null;
-                  const value = flag.feature_state_value ?? {};
+                  const value: Partial<FeatureStateValue> = flag.feature_state_value ?? {};
                   // count variations/overrides
                   const variations = flag.multivariate_feature_state_values.length;
                   const segments = environmentFlags.filter(
                     (each) =>
-                      String(each.feature) === String(featureId) && each.feature_segment !== null
+                      String(each.feature) === String(featureId) && each.feature_segment !== null,
                   ).length;
                   const identities = environmentFlags.filter(
-                    (each) => String(each.feature) === String(featureId) && each.identity !== null
+                    (each) => String(each.feature) === String(featureId) && each.identity !== null,
                   ).length;
                   return (
-                    <Row>
+                    <Row key={String(featureId)}>
                       <Cell>
                         <Text>{environment.name}</Text>
                         {variations > 0 && (
@@ -204,13 +210,15 @@ const IssueFlagTable = ({
   );
 };
 
+type Flags = Record<string, FlagModel[]>;
+
 type IssueFlagPanelProps = {
   setError: (error: Error) => void;
   jiraContext: JiraContext;
   apiKey: string;
   organisationId: string;
-  projectId: string;
-  featureIds: string[];
+  projectId: string | undefined;
+  featureIds: string[] | undefined;
   canEdit: boolean;
 };
 
@@ -224,9 +232,9 @@ const IssueFlagPanel = ({
 }: IssueFlagPanelProps) => {
   // set initial state
   const [featureIds, setFeatureIds] = useState(props.featureIds ?? []);
-  const [environments, setEnvironments] = useState([] as Model[]);
-  const [features, setFeatures] = useState([] as Model[]);
-  const [flags, setFlags] = useState({} as Record<string, Model[]>);
+  const [environments, setEnvironments] = useState([] as EnvironmentModel[]);
+  const [features, setFeatures] = useState([] as FeatureModel[]);
+  const [flags, setFlags] = useState({} as Flags);
 
   // load environments and features
   useEffect(async () => {
@@ -237,13 +245,13 @@ const IssueFlagPanel = ({
       setEnvironments(environments);
       // obtain features from API, ignoring archived features
       const features = (await fetchFeatures({ apiKey, projectId })).filter(
-        (each) => !each.archived_at
+        (each) => !each.archived_at,
       );
       // update form state
       setFeatures(features);
       if (environments.length > 0 && features.length > 0) {
         // obtain flags from API
-        const flags: Record<string, Model[]> = {};
+        const flags: Flags = {};
         for (const environment of environments) {
           flags[String(environment.id)] = await fetchFlags({
             apiKey,
@@ -256,7 +264,7 @@ const IssueFlagPanel = ({
     } catch (error) {
       setError(error);
     }
-  }, [apiKey, projectId]);
+  }, [apiKey, String(projectId)]);
 
   const onChange = async (featureIds: string[]) => {
     // persist to storage
@@ -300,6 +308,7 @@ const EditAction = ({ editing, setEditing }: EditActionProps) => (
   />
 );
 
+// eslint-disable-next-line react/display-name
 export default () => {
   const [editing, setEditing] = useState(false);
   // get initial values from storage
@@ -310,8 +319,11 @@ export default () => {
   const [featureIds, setFeatureIds] = useState(() => readFeatureIds(jiraContext));
   const [canEdit, setCanEdit] = useState(() => canEditIssue(jiraContext));
 
+  const actions = canEdit
+    ? [<EditAction key="edit" editing={editing} setEditing={setEditing} />]
+    : [];
   return (
-    <IssuePanel actions={canEdit ? [<EditAction editing={editing} setEditing={setEditing} />] : []}>
+    <IssuePanel actions={actions}>
       <ErrorWrapper<IssueFlagPanelProps>
         Child={IssueFlagPanel}
         apiKey={apiKey}

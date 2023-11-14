@@ -6,9 +6,7 @@
       "jsx": true
     }
   },
-  "plugins": [
-    "react-hooks"
-  ],
+  "plugins": ["react-hooks"],
   "extends": [
     "eslint:recommended",
     "plugin:react/recommended",
@@ -21,6 +19,11 @@
     "@typescript-eslint/no-unused-vars": "warn",
     "prettier/prettier": "warn",
     "react-hooks/rules-of-hooks": "error",
-    "react/display-name" : "off"
+    "react/display-name": "off"
+  },
+  "settings": {
+    "react": {
+      "version": "17"
+    }
   }
 }

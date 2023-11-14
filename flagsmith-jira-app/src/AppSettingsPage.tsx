@@ -13,7 +13,7 @@ import ForgeUI, {
 } from "@forge/ui";
 
 import { ErrorWrapper } from "./common";
-import { fetchOrganisations } from "./flagsmith";
+import { OrganisationModel, fetchOrganisations } from "./flagsmith";
 import {
   deleteApiKey,
   deleteOrganisationId,
@@ -36,11 +36,11 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
   // set initial state
   const [apiKey, setApiKey] = useState(props.apiKey);
   const [organisationId, setOrganisationId] = useState(props.organisationId);
-  const [organisations, setOrganisations] = useState([]);
+  const [organisations, setOrganisations] = useState([] as OrganisationModel[]);
 
   // load organisations
   useEffect(async () => {
-    let organisations = [];
+    let organisations = [] as OrganisationModel[];
     try {
       // obtain organisations from API
       organisations = await fetchOrganisations({ apiKey });
@@ -106,7 +106,7 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
     <Form
       onSubmit={onSave}
       submitButtonText="Save"
-      actionButtons={[<Button text="Clear" onClick={onClear} />]}
+      actionButtons={[<Button key="clear" text="Clear" onClick={onClear} />]}
     >
       <Text>
         <Strong>Status:</Strong>{" "}
@@ -139,6 +139,7 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
         >
           {organisations.map((organisation) => (
             <Option
+              key={String(organisation.id)}
               label={String(organisation.name)}
               value={String(organisation.id)}
               defaultSelected={String(organisationId) === String(organisation.id)}

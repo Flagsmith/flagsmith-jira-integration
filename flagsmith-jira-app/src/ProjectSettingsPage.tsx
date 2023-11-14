@@ -15,7 +15,7 @@ import ForgeUI, {
 } from "@forge/ui";
 
 import { ErrorWrapper, useJiraContext } from "./common";
-import { Model, fetchProjects } from "./flagsmith";
+import { ProjectModel, fetchProjects } from "./flagsmith";
 import { canAdminProject, readProjectId, writeProjectId } from "./jira";
 import { readApiKey, readOrganisationId } from "./storage";
 
@@ -27,7 +27,7 @@ type ProjectSettingsFormProps = {
   jiraContext: JiraContext;
   apiKey: string;
   organisationId: string;
-  projectId: string;
+  projectId: string | undefined;
   canAdmin: boolean;
 };
 
@@ -41,11 +41,11 @@ const ProjectSettingsForm = ({
 }: ProjectSettingsFormProps) => {
   // set initial state
   const [projectId, setProjectId] = useState(props.projectId);
-  const [projects, setProjects] = useState([] as Model[]);
+  const [projects, setProjects] = useState([] as ProjectModel[]);
 
   // load projects
   useEffect(async () => {
-    let projects = [];
+    let projects = [] as ProjectModel[];
     try {
       // obtain projects from API
       projects = await fetchProjects({ apiKey, organisationId });
@@ -68,7 +68,7 @@ const ProjectSettingsForm = ({
         setProjectId(undefined);
       }
     }
-  }, [apiKey, organisationId, projectId]);
+  }, [apiKey, organisationId, String(projectId)]);
 
   const onSave = async (data: Record<string, string>) => {
     // persist to storage
@@ -112,7 +112,7 @@ const ProjectSettingsForm = ({
         <Form
           onSubmit={onSave}
           submitButtonText="Save"
-          actionButtons={[<Button text="Clear" onClick={onClear} />]}
+          actionButtons={[<Button key="clear" text="Clear" onClick={onClear} />]}
         >
           <Select
             name="projectId"
@@ -123,6 +123,7 @@ const ProjectSettingsForm = ({
           >
             {projects.map((project) => (
               <Option
+                key={String(project.id)}
                 label={project.name}
                 value={String(project.id)}
                 defaultSelected={String(projectId) === String(project.id)}

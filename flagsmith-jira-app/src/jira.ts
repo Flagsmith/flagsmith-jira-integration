@@ -8,7 +8,7 @@ const getEntityPermission = async (
   jiraContext: JiraContext,
   ...permissionKeys: string[]
 ): Promise<boolean> => {
-  const entityId = jiraContext[`${entityType}Id`];
+  const entityId = String(jiraContext[`${entityType}Id`]);
   console.debug(`getEntityPermission(${entityId}, ${permissionKeys})`);
   const permissions = permissionKeys.join(",");
   const response = await api
@@ -19,7 +19,7 @@ const getEntityPermission = async (
         headers: {
           Accept: "application/json",
         },
-      }
+      },
     );
   // TODO check for 2xx
   const data = await response.json();
@@ -33,12 +33,12 @@ export const canAdminProject = async (jiraContext: JiraContext): Promise<boolean
 export const canEditIssue = async (jiraContext: JiraContext): Promise<boolean> =>
   await getEntityPermission("issue", jiraContext, "EDIT_ISSUES");
 
-const getEntityProperty = async (
+const getEntityProperty = async <T>(
   entityType: EntityType,
   jiraContext: JiraContext,
-  propertyKey: string
-): Promise<any | undefined> => {
-  const entityId = jiraContext[`${entityType}Id`];
+  propertyKey: string,
+): Promise<T | undefined> => {
+  const entityId = String(jiraContext[`${entityType}Id`]);
   console.debug(`getEntityProperty(${entityId}, ${propertyKey})`);
   const response = await api
     .asUser()
@@ -53,13 +53,13 @@ const getEntityProperty = async (
   return data?.value;
 };
 
-const setEntityProperty = async (
+const setEntityProperty = async <T>(
   entityType: EntityType,
   jiraContext: JiraContext,
   propertyKey: string,
-  value: any
+  value: T,
 ): Promise<void> => {
-  const entityId = jiraContext[`${entityType}Id`];
+  const entityId = String(jiraContext[`${entityType}Id`]);
   console.debug(`setEntityProperty(${entityId}, ${propertyKey}, ${value})`);
   const response = await api
     .asUser()
@@ -79,9 +79,9 @@ const setEntityProperty = async (
 const deleteEntityProperty = async (
   entityType: EntityType,
   jiraContext: JiraContext,
-  propertyKey: string
+  propertyKey: string,
 ): Promise<void> => {
-  const entityId = jiraContext[`${entityType}Id`];
+  const entityId = String(jiraContext[`${entityType}Id`]);
   console.debug(`deleteEntityProperty(${entityId}, ${propertyKey}`);
   const response = await api
     .asUser()
@@ -105,7 +105,7 @@ export const readProjectId = async (jiraContext: JiraContext): Promise<string | 
 
 export const writeProjectId = async (
   jiraContext: JiraContext,
-  projectId: string
+  projectId: string | undefined,
 ): Promise<void> => {
   if (projectId) {
     return await setEntityProperty("project", jiraContext, PROJECT_ID, projectId);
@@ -119,7 +119,7 @@ export const readFeatureIds = async (jiraContext: JiraContext): Promise<string[]
 
 export const writeFeatureIds = async (
   jiraContext: JiraContext,
-  featureIds: string[]
+  featureIds: string[],
 ): Promise<void> => {
   if (featureIds.length) {
     return await setEntityProperty("issue", jiraContext, FEATURE_IDS, featureIds);

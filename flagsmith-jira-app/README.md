@@ -5,7 +5,6 @@ This project contains a Forge app written in TypeScript that provides a table of
 See [developer.atlassian.com/platform/forge](https://developer.atlassian.com/platform/forge) for documentation and tutorials explaining Forge.
 
 This app is based on the [Jira hello world app](https://developer.atlassian.com/platform/forge/build-a-hello-world-app-in-jira/) so any oddities in its configuration are as created by following those instructions.
-Added to this are some standard TypeScript/React/Prettier eslint config, minimal Prettier config and enough TypeScript config for it to understand JSX correctly in Visual Studio Code.
 
 ## Overview
 
@@ -36,6 +35,12 @@ This includes the `id` of the app within Atlassian Cloud. Change this value to d
 ### Source Code
 
 The three entry points to the app are contained in the `src/index.jsx` file. These define React components for App Settings, Project Settings and Issue Panel.
+
+### Linting and Formatting
+
+The Atlassian template provided some basic eslint config, to which TypeScript/React/Prettier have been added with minimal Prettier config and enough TypeScript config for Visual Studio Code to understand JSX correctly.
+
+Execute `npm run eslint` to check linting and formatting.
 
 ### Deployment
 

@@ -24,13 +24,13 @@ export class ApiError extends Error {
 }
 
 type ErrorWrapperProps = {
-  Child: (props: any) => any;
+  Child: (props: Record<string, unknown>) => JSX.Element;
   onRetry?: () => Promise<void>;
 };
 
 type SectionMessageAppearance = Parameters<typeof SectionMessage>[0]["appearance"];
 
-export const ErrorWrapper = <TChildProps extends { setError: (error: Error) => void } = any>({
+export const ErrorWrapper = <TChildProps extends { setError: (error: Error) => void }>({
   Child,
   onRetry = undefined,
   ...props
@@ -42,7 +42,8 @@ export const ErrorWrapper = <TChildProps extends { setError: (error: Error) => v
       "An unexpected error occured. Please try again later or contact Flagsmith support for advice.";
     // for some reason (error instanceof ApiError) is false here :(
     if (
-      error.hasOwnProperty("code") &&
+      Object.prototype.hasOwnProperty.call(error, "code") &&
+      (error as ApiError).code >= 400 &&
       (error as ApiError).code >= 400 &&
       (error as ApiError).code < 500
     ) {
