@@ -1,7 +1,15 @@
-import api, { route } from "@forge/api";
+import api, { APIResponse, route } from "@forge/api";
 import { JiraContext } from "@forge/ui";
 
+import { ApiError } from "./common";
+
 type EntityType = "project" | "issue";
+
+const checkResponse = (response: APIResponse): void => {
+  if (!response.ok) {
+    throw new ApiError("Unexpected Jira API response", response.status);
+  }
+};
 
 const getEntityPermission = async (
   entityType: EntityType,
@@ -21,7 +29,7 @@ const getEntityPermission = async (
         },
       },
     );
-  // TODO check for 2xx
+  checkResponse(response);
   const data = await response.json();
   console.debug(data);
   return permissionKeys.some((permissionKey) => data?.permissions?.[permissionKey]?.havePermission);
@@ -47,7 +55,7 @@ const getEntityProperty = async <T>(
         Accept: "application/json",
       },
     });
-  // TODO check for 2xx
+  checkResponse(response);
   const data = await response.json();
   console.debug(data);
   return data?.value;
@@ -71,7 +79,7 @@ const setEntityProperty = async <T>(
       },
       body: JSON.stringify(value),
     });
-  // TODO check for 2xx
+  checkResponse(response);
   const data = await response.text();
   console.debug(data);
 };
@@ -92,7 +100,7 @@ const deleteEntityProperty = async (
         "Content-Type": "application/json",
       },
     });
-  // TODO check for 2xx
+  checkResponse(response);
   const data = await response.text();
   console.debug(data);
 };
