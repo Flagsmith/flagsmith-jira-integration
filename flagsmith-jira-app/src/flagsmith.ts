@@ -23,6 +23,7 @@ const flagsmithApi = async (apiKey: string, route: Route): Promise<unknown> => {
     const res = await api.fetch(url, {
       headers: {
         Accept: "application/json",
+        // TODO change to Api-Key ${apiKey} (for RBAC tokens) before official release
         Authorization: `Token ${apiKey}`,
       },
     });
