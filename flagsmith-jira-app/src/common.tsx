@@ -48,7 +48,7 @@ export const ErrorWrapper = <TChildProps extends { setError: (error: Error) => v
       (error as ApiError).code < 500
     ) {
       appearance = "warning";
-      advice = "Please check your app and project configuration and try again.";
+      advice = "Please check your app and project settings and try again.";
     }
     return (
       <Fragment>

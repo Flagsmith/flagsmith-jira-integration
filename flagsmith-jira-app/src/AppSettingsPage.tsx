@@ -26,6 +26,9 @@ import {
 // dummy call to stop the linter removing unused import
 ForgeUI;
 
+// 40 chars, same length as API key
+const SENTINEL = "****************************************";
+
 type AppSettingsFormProps = {
   setError: (error: Error) => void;
   apiKey: string;
@@ -75,7 +78,7 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
   const onSave = async (data: Record<string, string>) => {
     // persist to storage (which seemingly cannot store "")
     if (data.apiKey) {
-      await writeApiKey(data.apiKey);
+      if (data.apiKey !== SENTINEL) await writeApiKey(data.apiKey);
     } else {
       await deleteApiKey();
     }
@@ -85,7 +88,7 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
       await deleteOrganisationId();
     }
     // update form state
-    setApiKey(data.apiKey);
+    if (data.apiKey !== SENTINEL) setApiKey(data.apiKey);
     setOrganisationId(data.organisationId);
   };
 
@@ -123,7 +126,7 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
         description="Enter your Flagsmith API key"
         isRequired
         aria-required={true}
-        defaultValue={apiKey}
+        defaultValue={apiKey ? SENTINEL : ""}
         autoComplete="off"
       />
       {organisations.length === 1 && !!organisation && (
