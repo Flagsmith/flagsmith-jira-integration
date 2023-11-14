@@ -31,9 +31,6 @@ resources:
 permissions:
   scopes:
     - storage:app
-    # TODO review classic scopes needed versus granular scopes
-    # - read:jira-work
-    # - write:jira-work
     - read:project.property:jira
     - write:project.property:jira
     - delete:project.property:jira
