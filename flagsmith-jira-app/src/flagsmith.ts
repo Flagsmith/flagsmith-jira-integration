@@ -1,6 +1,6 @@
 import api, { APIResponse, Route, assumeTrustedRoute, route } from "@forge/api";
 
-import { ApiError } from "./common";
+import { ApiArgs, ApiError } from "./common";
 
 type Model = {
   id: number;
@@ -42,32 +42,42 @@ type PaginatedModels<TModel extends Model> = {
 
 const API_V1 = "https://api.flagsmith.com/api/v1";
 
-const flagsmithApi = async (apiKey: string, route: Route): Promise<unknown> => {
+const flagsmithApi = async (
+  apiKey: string,
+  route: Route,
+  { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {},
+): Promise<unknown> => {
   try {
     const url = `${API_V1}${route.value}`;
-    console.debug("GET", url);
+    console.debug(method, url);
     const response = await api.fetch(url, {
+      method,
       headers: {
         Accept: "application/json",
         // TODO change to Api-Key ${apiKey} (for RBAC tokens) before official release
         Authorization: `Token ${apiKey}`,
+        ...headers,
       },
+      body,
     });
-    checkResponse(response);
-    const data = await response.json();
+    checkResponse(response, ...codes);
+    const data = await (jsonResponse ? response.json() : response.text());
     console.debug(JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
     console.error(error);
     if (!(error instanceof Error)) throw error;
+    // rethrow expected errors
+    if (error instanceof ApiError) throw error;
     // @ts-expect-error error.code may not exist
     throw new ApiError(error.message, error.code);
   }
 };
 
-const checkResponse = (response: APIResponse): void => {
-  if (!response.ok) {
-    throw new ApiError("Unexpected Flagsmith API response", response.status);
+const checkResponse = (response: APIResponse, ...codes: number[]): void => {
+  if (!response.ok && !codes.includes(response.status)) {
+    console.warn(response.status, response.statusText);
+    throw new ApiError("Unexpected Flagsmith API response:", response.status);
   }
 };
 

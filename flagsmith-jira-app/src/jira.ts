@@ -1,13 +1,43 @@
-import api, { APIResponse, route } from "@forge/api";
+import api, { APIResponse, Route, route } from "@forge/api";
 import { JiraContext } from "@forge/ui";
 
-import { ApiError } from "./common";
+import { ApiArgs, ApiError } from "./common";
 
 type EntityType = "project" | "issue";
 
-const checkResponse = (response: APIResponse): void => {
-  if (!response.ok) {
-    throw new ApiError("Unexpected Jira API response", response.status);
+const jiraApi = async (
+  route: Route,
+  { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {},
+): Promise<unknown> => {
+  try {
+    console.debug(method, route.value);
+    const response = await api.asUser().requestJira(route, {
+      method,
+      headers: {
+        Accept: "application/json",
+        ...headers,
+      },
+      body,
+    });
+    checkResponse(response, ...codes);
+    const data = await (jsonResponse ? response.json() : response.text());
+    console.debug(JSON.stringify(data, null, 2));
+    return data;
+  } catch (error) {
+    console.error(error);
+    if (!(error instanceof Error)) throw error;
+    // rethrow expected errors
+    if (error instanceof ApiError) throw error;
+    // wrap unexpected errors
+    // @ts-expect-error error.code may not exist
+    throw new ApiError(error.message, error.code);
+  }
+};
+
+const checkResponse = (response: APIResponse, ...codes: number[]): void => {
+  if (!response.ok && !codes.includes(response.status)) {
+    console.warn(response.status, response.statusText);
+    throw new ApiError("Unexpected Jira API response:", response.status);
   }
 };
 
@@ -17,21 +47,10 @@ const getEntityPermission = async (
   ...permissionKeys: string[]
 ): Promise<boolean> => {
   const entityId = String(jiraContext[`${entityType}Id`]);
-  console.debug(`getEntityPermission(${entityId}, ${permissionKeys})`);
   const permissions = permissionKeys.join(",");
-  const response = await api
-    .asUser()
-    .requestJira(
-      route`/rest/api/3/mypermissions?${entityType}Id=${entityId}&permissions=${permissions}`,
-      {
-        headers: {
-          Accept: "application/json",
-        },
-      },
-    );
-  checkResponse(response);
-  const data = await response.json();
-  console.debug(data);
+  const data = (await jiraApi(
+    route`/rest/api/3/mypermissions?${entityType}Id=${entityId}&permissions=${permissions}`,
+  )) as { permissions?: Record<string, { havePermission?: boolean }> };
   return permissionKeys.some((permissionKey) => data?.permissions?.[permissionKey]?.havePermission);
 };
 
@@ -47,17 +66,10 @@ const getEntityProperty = async <T>(
   propertyKey: string,
 ): Promise<T | undefined> => {
   const entityId = String(jiraContext[`${entityType}Id`]);
-  console.debug(`getEntityProperty(${entityId}, ${propertyKey})`);
-  const response = await api
-    .asUser()
-    .requestJira(route`/rest/api/3/${entityType}/${entityId}/properties/${propertyKey}`, {
-      headers: {
-        Accept: "application/json",
-      },
-    });
-  checkResponse(response);
-  const data = await response.json();
-  console.debug(data);
+  const data = (await jiraApi(
+    route`/rest/api/3/${entityType}/${entityId}/properties/${propertyKey}`,
+    { codes: [404] },
+  )) as { value?: T };
   return data?.value;
 };
 
@@ -68,20 +80,11 @@ const setEntityProperty = async <T>(
   value: T,
 ): Promise<void> => {
   const entityId = String(jiraContext[`${entityType}Id`]);
-  console.debug(`setEntityProperty(${entityId}, ${propertyKey}, ${value})`);
-  const response = await api
-    .asUser()
-    .requestJira(route`/rest/api/3/${entityType}/${entityId}/properties/${propertyKey}`, {
-      method: "PUT",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(value),
-    });
-  checkResponse(response);
-  const data = await response.text();
-  console.debug(data);
+  await jiraApi(route`/rest/api/3/${entityType}/${entityId}/properties/${propertyKey}`, {
+    method: "PUT",
+    body: JSON.stringify(value),
+    jsonResponse: false,
+  });
 };
 
 const deleteEntityProperty = async (
@@ -90,19 +93,11 @@ const deleteEntityProperty = async (
   propertyKey: string,
 ): Promise<void> => {
   const entityId = String(jiraContext[`${entityType}Id`]);
-  console.debug(`deleteEntityProperty(${entityId}, ${propertyKey}`);
-  const response = await api
-    .asUser()
-    .requestJira(route`/rest/api/3/${entityType}/${entityId}/properties/${propertyKey}`, {
-      method: "DELETE",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-    });
-  checkResponse(response);
-  const data = await response.text();
-  console.debug(data);
+  await jiraApi(route`/rest/api/3/${entityType}/${entityId}/properties/${propertyKey}`, {
+    method: "DELETE",
+    codes: [404], // Jira DELETE is not idempotent :/
+    jsonResponse: false,
+  });
 };
 
 const PROJECT_ID = "flagsmith.project";

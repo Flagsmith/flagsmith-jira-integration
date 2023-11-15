@@ -8,11 +8,20 @@ import ForgeUI, {
   useProductContext,
   useState,
 } from "@forge/ui";
+import { BodyInit, HeaderInit } from "node-fetch";
 
 // dummy call to stop the linter removing JSX-enabling import
 ForgeUI;
 
 export const useJiraContext = () => useProductContext().platformContext as JiraContext;
+
+export type ApiArgs = {
+  method?: string;
+  headers?: HeaderInit;
+  body?: BodyInit;
+  codes?: number[];
+  jsonResponse?: boolean;
+};
 
 export class ApiError extends Error {
   code: number;
