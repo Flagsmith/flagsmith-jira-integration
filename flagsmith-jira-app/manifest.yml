@@ -1,6 +1,5 @@
 app:
-  # TODO create Flagsmith Atlassian account and app
-  id: ari:cloud:ecosystem::app/3fd8c838-2ced-45a5-8807-0401ec45a096
+  id: ari:cloud:ecosystem::app/9ea1f892-1356-44bd-9ac8-684abf3a5714
 modules:
   jira:adminPage:
     - key: app-settings
