@@ -46,7 +46,7 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
     let organisations = [] as OrganisationModel[];
     try {
       // obtain organisations from API
-      organisations = await fetchOrganisations({ apiKey });
+      if (apiKey) organisations = await fetchOrganisations({ apiKey });
       // update form state
       setOrganisations(organisations);
     } catch (error) {
