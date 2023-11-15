@@ -154,7 +154,6 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
           ))}
         </Select>
       )}
-      {/* <Text>=={JSON.stringify(organisationId)}==</Text> */}
     </Form>
   );
 };

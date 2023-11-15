@@ -28,7 +28,6 @@ type ProjectSettingsFormProps = {
   apiKey: string;
   organisationId: string;
   projectId: string | undefined;
-  canAdmin: boolean;
 };
 
 const ProjectSettingsForm = ({
@@ -36,7 +35,6 @@ const ProjectSettingsForm = ({
   jiraContext,
   apiKey,
   organisationId,
-  canAdmin,
   ...props
 }: ProjectSettingsFormProps) => {
   // set initial state
@@ -99,17 +97,7 @@ const ProjectSettingsForm = ({
         )}
         {!!apiKey && !!project && <StatusLozenge appearance="success" text="Connected" />}
       </Text>
-      {!canAdmin && project && (
-        <Text>
-          <Strong>Project: {project.name}</Strong>
-        </Text>
-      )}
-      {!canAdmin && (
-        <SectionMessage appearance="info">
-          <Text>You do not have permission to configure this project.</Text>
-        </SectionMessage>
-      )}
-      {canAdmin && projects.length > 0 && (
+      {projects.length > 0 && (
         <Form
           onSubmit={onSave}
           submitButtonText="Save"
@@ -133,7 +121,6 @@ const ProjectSettingsForm = ({
           </Select>
         </Form>
       )}
-      {/* <Text>=={JSON.stringify(projectId)}==</Text> */}
     </Fragment>
   );
 };
@@ -144,10 +131,6 @@ export default () => {
   const [organisationId, setOrganisationId] = useState(readOrganisationId);
   const jiraContext = useJiraContext();
   const [projectId, setProjectId] = useState(() => readProjectId(jiraContext));
-  // get permissions
-  // TODO check if it'spossible to view project settings without editing them,
-  // and if not, this check and the canAdmin=false UI can be removed
-  const [canAdmin, setCanAdmin] = useState(() => canAdminProject(jiraContext));
   return (
     <ProjectSettingsPage>
       <ErrorWrapper
@@ -158,14 +141,12 @@ export default () => {
             apiKey={apiKey}
             organisationId={organisationId}
             projectId={projectId}
-            canAdmin={canAdmin}
           />
         )}
         onRetry={async () => {
           setApiKey(await readApiKey());
           setOrganisationId(await readOrganisationId());
           setProjectId(await readProjectId(jiraContext));
-          setCanAdmin(await canAdminProject(jiraContext));
         }}
       />
     </ProjectSettingsPage>

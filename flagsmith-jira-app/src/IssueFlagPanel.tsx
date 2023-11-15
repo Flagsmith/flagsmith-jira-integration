@@ -274,7 +274,6 @@ const IssueFlagPanel = ({
 
   return (
     <Fragment>
-      {/* <Text>{JSON.stringify(flags)}</Text> */}
       <IssueFlagTable
         environments={environments}
         features={features}
