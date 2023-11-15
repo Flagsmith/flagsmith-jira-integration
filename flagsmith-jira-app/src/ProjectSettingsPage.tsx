@@ -52,6 +52,7 @@ const ProjectSettingsForm = ({
       // update form state
       setProjects(projects);
     } catch (error) {
+      if (!(error instanceof Error)) throw error;
       setError(error);
     }
 
@@ -149,13 +150,17 @@ export default () => {
   const [canAdmin, setCanAdmin] = useState(() => canAdminProject(jiraContext));
   return (
     <ProjectSettingsPage>
-      <ErrorWrapper<ProjectSettingsFormProps>
-        Child={ProjectSettingsForm}
-        jiraContext={jiraContext}
-        apiKey={apiKey}
-        organisationId={organisationId}
-        projectId={projectId}
-        canAdmin={canAdmin}
+      <ErrorWrapper
+        renderChild={(setError) => (
+          <ProjectSettingsForm
+            setError={setError}
+            jiraContext={jiraContext}
+            apiKey={apiKey}
+            organisationId={organisationId}
+            projectId={projectId}
+            canAdmin={canAdmin}
+          />
+        )}
         onRetry={async () => {
           setApiKey(await readApiKey());
           setOrganisationId(await readOrganisationId());

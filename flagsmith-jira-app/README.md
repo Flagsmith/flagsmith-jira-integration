@@ -37,7 +37,7 @@ The three entry points to the app are contained in the `src/index.jsx` file. The
 
 ### Linting and Formatting
 
-The Atlassian template provided some basic eslint config, to which TypeScript/React/Prettier have been added with minimal Prettier config and enough TypeScript config for Visual Studio Code to understand JSX correctly.
+The Atlassian template provided some basic eslint config, to which sensible TypeScript/React/Prettier defaults have been added.
 
 Execute `npm run eslint` to check linting and formatting.
 

@@ -12,7 +12,7 @@ import ForgeUI, {
   useState,
 } from "@forge/ui";
 
-import { ErrorWrapper } from "./common";
+import { ApiError, ErrorWrapper } from "./common";
 import { OrganisationModel, fetchOrganisations } from "./flagsmith";
 import {
   deleteApiKey,
@@ -50,10 +50,11 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
       // update form state
       setOrganisations(organisations);
     } catch (error) {
+      if (!(error instanceof Error)) throw error;
       // ignore 401 (invalid API key) and 404 (no organisations) as that is handled by this form
       if (
         !Object.prototype.hasOwnProperty.call(error, "code") ||
-        ![401, 404].includes(error.code)
+        ![401, 404].includes((error as ApiError).code)
       ) {
         setError(error);
       }
@@ -65,7 +66,7 @@ const AppSettingsForm = ({ setError, ...props }: AppSettingsFormProps) => {
     if (!organisation) {
       if (organisations.length > 0) {
         // ...set to first organisation (if any)
-        const firstId = String(organisations[0].id);
+        const firstId = String(organisations[0]?.id);
         // persist to storage
         await writeOrganisationId(firstId);
         // update form state
@@ -164,10 +165,10 @@ export default () => {
   const [organisationId, setOrganisationId] = useState(readOrganisationId);
   return (
     <AdminPage>
-      <ErrorWrapper<AppSettingsFormProps>
-        Child={AppSettingsForm}
-        apiKey={apiKey}
-        organisationId={organisationId}
+      <ErrorWrapper
+        renderChild={(setError) => (
+          <AppSettingsForm setError={setError} apiKey={apiKey} organisationId={organisationId} />
+        )}
         onRetry={async () => {
           setApiKey(await readApiKey());
           setOrganisationId(await readOrganisationId());

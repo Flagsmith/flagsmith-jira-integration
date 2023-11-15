@@ -23,18 +23,15 @@ export class ApiError extends Error {
   }
 }
 
-type ErrorWrapperProps = {
-  Child: (props: Record<string, unknown>) => JSX.Element;
-  onRetry?: () => Promise<void>;
-};
-
 type SectionMessageAppearance = Parameters<typeof SectionMessage>[0]["appearance"];
 
-export const ErrorWrapper = <TChildProps extends { setError: (error: Error) => void }>({
-  Child,
+export const ErrorWrapper = ({
+  renderChild,
   onRetry = undefined,
-  ...props
-}: ErrorWrapperProps & Omit<TChildProps, "setError">) => {
+}: {
+  renderChild: (setError: (error?: Error) => void) => JSX.Element;
+  onRetry?: () => Promise<void>;
+}) => {
   const [error, setError] = useState<Error | undefined>(undefined);
   if (error) {
     let appearance: SectionMessageAppearance = "error";
@@ -68,5 +65,5 @@ export const ErrorWrapper = <TChildProps extends { setError: (error: Error) => v
     );
   }
   // otherwise render child
-  return <Child setError={setError} {...props} />;
+  return renderChild(setError);
 };

@@ -59,6 +59,8 @@ const flagsmithApi = async (apiKey: string, route: Route): Promise<unknown> => {
     return data;
   } catch (error) {
     console.error(error);
+    if (!(error instanceof Error)) throw error;
+    // @ts-expect-error error.code may not exist
     throw new ApiError(error.message, error.code);
   }
 };

@@ -257,6 +257,7 @@ const IssueFlagPanel = ({
         setFlags(flags);
       }
     } catch (error) {
+      if (!(error instanceof Error)) throw error;
       setError(error);
     }
   }, [apiKey, String(projectId)]);
@@ -317,14 +318,18 @@ export default () => {
     : [];
   return (
     <IssuePanel actions={actions}>
-      <ErrorWrapper<IssueFlagPanelProps>
-        Child={IssueFlagPanel}
-        apiKey={apiKey}
-        jiraContext={jiraContext}
-        organisationId={organisationId}
-        projectId={projectId}
-        featureIds={featureIds}
-        canEdit={canEdit && editing}
+      <ErrorWrapper
+        renderChild={(setError) => (
+          <IssueFlagPanel
+            setError={setError}
+            apiKey={apiKey}
+            jiraContext={jiraContext}
+            organisationId={organisationId}
+            projectId={projectId}
+            featureIds={featureIds}
+            canEdit={canEdit && editing}
+          />
+        )}
         onRetry={async () => {
           setApiKey(await readApiKey());
           setOrganisationId(await readOrganisationId());
