@@ -49,7 +49,7 @@ const flagsmithApi = async (
 ): Promise<unknown> => {
   try {
     const url = `${API_V1}${route.value}`;
-    console.debug(method, url);
+    if (process.env.DEBUG) console.debug(method, url);
     const response = await api.fetch(url, {
       method,
       headers: {
@@ -62,7 +62,7 @@ const flagsmithApi = async (
     });
     checkResponse(response, ...codes);
     const data = await (jsonResponse ? response.json() : response.text());
-    console.debug(JSON.stringify(data, null, 2));
+    if (process.env.DEBUG) console.debug(JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
     console.error(error);

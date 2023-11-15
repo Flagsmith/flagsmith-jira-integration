@@ -41,7 +41,7 @@ The Atlassian template provided some basic eslint config, to which sensible Type
 
 Execute `npm run eslint` to check linting and formatting.
 
-### Deployment
+### Deployment and Installation
 
 Forge apps may be deployed to one of three environments:
 
@@ -69,13 +69,21 @@ Use the `install` command and follow the prompts to install the app on a new sit
 
 Once the app is installed on a site, the site picks up changes you deploy without needing to rerun the install command. For major version changes the `--upgrade` flag must be used.
 
-### Debugging
+### Debugging and Development
 
-Use the `tunnel` command to proxy invocations locally (development environment only):
+To log API calls set the `DEBUG` environment variable:
 
-    forge tunnel
+    forge variables set DEBUG 1
 
-This seems to report a "Checking Docker image... failed" error, but it still works. See [Tunneling](https://developer.atlassian.com/platform/forge/tunneling/) for more information.
+To switch this off again:
+
+    forge variables unset DEBUG
+
+Use the `tunnel` command to test code (but not manifest) changes without having to deploy them (development environment only). This proxies invocations when you use the app to your local environment. To set environment variables, prefix them with `FORGE_USER_VAR_`:
+
+    FORGE_USER_VAR_DEBUG=1 forge tunnel
+
+This command always seems to report a "Checking Docker image... failed" error, but it still works. See [Tunneling](https://developer.atlassian.com/platform/forge/tunneling/) for more information.
 
 Use the `logs` command to see logs (development/staging environment only):
 

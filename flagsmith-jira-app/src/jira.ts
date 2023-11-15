@@ -10,7 +10,7 @@ const jiraApi = async (
   { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {},
 ): Promise<unknown> => {
   try {
-    console.debug(method, route.value);
+    if (process.env.DEBUG) console.debug(method, route.value);
     const response = await api.asUser().requestJira(route, {
       method,
       headers: {
@@ -21,7 +21,7 @@ const jiraApi = async (
     });
     checkResponse(response, ...codes);
     const data = await (jsonResponse ? response.json() : response.text());
-    console.debug(JSON.stringify(data, null, 2));
+    if (process.env.DEBUG) console.debug(JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
     console.error(error);
