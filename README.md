@@ -10,11 +10,12 @@ The following steps reflect the usual [Getting started](https://developer.atlass
 
 ### Before you begin
 
-Forge CLI requires [Docker](https://docs.docker.com/get-docker/) and Node.js 20 (LTS) using [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) to be installed:
+Forge CLI requires [Docker](https://docs.docker.com/get-docker/) and Node.js 20 (LTS) to be installed:
 
 - [Apple macOS](https://developer.atlassian.com/platform/forge/installing-forge-on-macos)
 - [Linux](https://developer.atlassian.com/platform/forge/installing-forge-on-linux)
 
+Forge recommend installing Node using using [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) but [asdf](https://asdf-vm.com/) also works.
 Ensure you are using the correct Node.js version before executing any other commands:
 
     nvm use
@@ -29,7 +30,7 @@ The Forge CLI is then available by typing `npx forge`.
 
 ### Log in with an Atlassian API token
 
-Create or use an existing Atlassian API token to log in to the CLI. The CLI uses your token when running commands.
+Create an Atlassian API token to log in to the CLI. The CLI uses your token when running commands.
 
 1. Go to <https://id.atlassian.com/manage/api-tokens>.
 1. Click Create API token.
@@ -37,9 +38,7 @@ Create or use an existing Atlassian API token to log in to the CLI. The CLI uses
 1. Click Create.
 1. Click Copy to clipboard and close the dialog.
 
-TODO work out whether each developer uses their own API token or whether this comes from the Flagsmith Jira account.
-
-The `forge login` command attempts to store credentials in your operating system keychain and may not work on all platforms. So we will skip this command and set environment variables instead.
+The `forge login` command attempts to store credentials in your operating system keychain and may not work on all platforms. Instead, we can skip this command and set environment variables instead.
 
 ### Using environment variables to login
 
@@ -51,10 +50,14 @@ If you use [direnv](https://direnv.net/) these values should be picked up automa
 
 This reads `.env` values into your shell environment and also sets an alias so you can execute Forge CLI commands by typing `forge` without needing an `npx` prefix or to or mess with your path variable.
 
-Check installation by typing e.g.:
+Check installation and authentication by typing e.g.:
 
     forge whoami
 
 ## Flagsmith Jira app deployment
+
+First change into the app folder:
+
+    cd flagsmith-jira-app
 
 See [flagsmith-jira-app/README.md](flagsmith-jira-app/README.md).

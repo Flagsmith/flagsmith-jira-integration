@@ -1,10 +1,9 @@
 # Flagsmith Jira App
 
 This project contains a Forge app written in TypeScript that provides a table of Flagsmith features in a Jira issue panel.
+The app is based on the [Jira hello world app](https://developer.atlassian.com/platform/forge/build-a-hello-world-app-in-jira/) so any oddities in its configuration are as created by following those instructions.
 
 See [developer.atlassian.com/platform/forge](https://developer.atlassian.com/platform/forge) for documentation and tutorials explaining Forge.
-
-This app is based on the [Jira hello world app](https://developer.atlassian.com/platform/forge/build-a-hello-world-app-in-jira/) so any oddities in its configuration are as created by following those instructions.
 
 ## Overview
 
@@ -53,6 +52,8 @@ Forge apps may be deployed to one of three environments:
 Once an app is running in an environment, you can install it from that environment onto an Atlassian site.
 
 By default, the CLI commands affect the development environment unless you specify another with the `--environment` flag. All the commands provide help given the `--help` flag.
+
+First ensure you're in the `flagsmith-jira-app` folder, not the containing folder.
 
 Use the `deploy` command and follow the prompts to persist code changes:
 
