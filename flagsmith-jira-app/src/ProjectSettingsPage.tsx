@@ -5,7 +5,6 @@ import ForgeUI, {
   JiraContext,
   Option,
   ProjectSettingsPage,
-  SectionMessage,
   Select,
   StatusLozenge,
   Strong,
@@ -16,7 +15,7 @@ import ForgeUI, {
 
 import { ErrorWrapper, useJiraContext } from "./common";
 import { ProjectModel, fetchProjects } from "./flagsmith";
-import { canAdminProject, readProjectId, writeProjectId } from "./jira";
+import { readProjectId, writeProjectId } from "./jira";
 import { readApiKey, readOrganisationId } from "./storage";
 
 // dummy call to stop the linter removing JSX-enabling import
