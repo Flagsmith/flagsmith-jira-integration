@@ -11,6 +11,7 @@ import ForgeUI, {
   IssuePanel,
   IssuePanelAction,
   JiraContext,
+  Link,
   Option,
   Row,
   Select,
@@ -24,6 +25,7 @@ import ForgeUI, {
 import { ErrorWrapper, useJiraContext } from "./common";
 import {
   EnvironmentModel,
+  FLAGSMITH_APP,
   FeatureModel,
   FeatureStateValue,
   FlagModel,
@@ -49,7 +51,7 @@ const IssueFlagForm = ({ features, featureIds, onAdd }: IssueFlagFormProps) => {
   return (
     <Fragment>
       {addableFeatures.length > 0 && (
-        <Form onSubmit={(data) => onAdd(data.featureId)} submitButtonText="Add to issue">
+        <Form onSubmit={(data) => onAdd(data.featureId)} submitButtonText="Link to issue">
           <Select
             name="featureId"
             label="Feature"
@@ -68,6 +70,7 @@ const IssueFlagForm = ({ features, featureIds, onAdd }: IssueFlagFormProps) => {
 };
 
 type IssueFlagTableProps = {
+  projectUrl: string;
   environments: EnvironmentModel[];
   features: FeatureModel[];
   flags: Record<string, FlagModel[]>;
@@ -77,6 +80,7 @@ type IssueFlagTableProps = {
 };
 
 const IssueFlagTable = ({
+  projectUrl,
   environments,
   features,
   flags,
@@ -138,7 +142,15 @@ const IssueFlagTable = ({
                   return (
                     <Row key={String(featureId)}>
                       <Cell>
-                        <Text>{environment.name}</Text>
+                        <Text>
+                          <Link
+                            href={`${projectUrl}/environment/${environment.api_key}/features?feature=${featureId}`}
+                            appearance="link"
+                            openNewTab
+                          >
+                            {environment.name}
+                          </Link>
+                        </Text>
                         {variations > 0 && (
                           <Text>
                             <Badge
@@ -194,7 +206,7 @@ const IssueFlagTable = ({
               </Table>
               {canEdit && (
                 <ButtonSet>
-                  <Button text="Remove from issue" onClick={() => onRemove(featureId)} />
+                  <Button text="Unlink from issue" onClick={() => onRemove(featureId)} />
                 </ButtonSet>
               )}
             </Fragment>
@@ -272,9 +284,11 @@ const IssueFlagPanel = ({
   const onRemove = (featureId: string) =>
     onChange(featureIds.filter((each) => String(each) !== featureId));
 
+  const projectUrl = `${FLAGSMITH_APP}/project/${projectId}`;
   return (
     <Fragment>
       <IssueFlagTable
+        projectUrl={projectUrl}
         environments={environments}
         features={features}
         flags={flags}
@@ -294,7 +308,7 @@ type EditActionProps = {
 
 const EditAction = ({ editing, setEditing }: EditActionProps) => (
   <IssuePanelAction
-    text={editing ? "View features" : "Choose features"}
+    text={editing ? "View features" : "Edit features"}
     onClick={() => {
       setEditing(!editing);
     }}
@@ -303,7 +317,6 @@ const EditAction = ({ editing, setEditing }: EditActionProps) => (
 
 // eslint-disable-next-line react/display-name
 export default () => {
-  const [editing, setEditing] = useState(false);
   // get initial values from storage
   const [apiKey, setApiKey] = useState(readApiKey);
   const [organisationId, setOrganisationId] = useState(readOrganisationId);
@@ -311,6 +324,7 @@ export default () => {
   const [projectId, setProjectId] = useState(() => readProjectId(jiraContext));
   const [featureIds, setFeatureIds] = useState(() => readFeatureIds(jiraContext));
   const [canEdit, setCanEdit] = useState(() => canEditIssue(jiraContext));
+  const [editing, setEditing] = useState(!(featureIds ?? []).length);
 
   const actions = canEdit
     ? [<EditAction key="edit" editing={editing} setEditing={setEditing} />]

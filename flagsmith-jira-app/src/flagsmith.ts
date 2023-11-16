@@ -9,7 +9,8 @@ type Model = {
 
 export type OrganisationModel = Model;
 export type ProjectModel = Model;
-export type EnvironmentModel = Model;
+
+export type EnvironmentModel = Model & { api_key: string };
 
 export type FeatureModel = Model & {
   description: string;
@@ -40,7 +41,9 @@ type PaginatedModels<TModel extends Model> = {
   results: TModel[];
 };
 
-const API_V1 = "https://api.flagsmith.com/api/v1";
+// TODO later: these could be set from environment variables for self-hosted users
+const FLAGSMITH_API_V1 = "https://api.flagsmith.com/api/v1";
+export const FLAGSMITH_APP = "https://app.flagsmith.com";
 
 const flagsmithApi = async (
   apiKey: string,
@@ -48,7 +51,7 @@ const flagsmithApi = async (
   { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {},
 ): Promise<unknown> => {
   try {
-    const url = `${API_V1}${route.value}`;
+    const url = `${FLAGSMITH_API_V1}${route.value}`;
     if (process.env.DEBUG) console.debug(method, url);
     const response = await api.fetch(url, {
       method,
@@ -88,7 +91,7 @@ const unpaginate = async <TModel extends Model>(
   let pageData = data;
   const results = pageData?.results ?? [];
   while (pageData.next) {
-    const nextPath = assumeTrustedRoute(pageData.next.slice(API_V1.length));
+    const nextPath = assumeTrustedRoute(pageData.next.slice(FLAGSMITH_API_V1.length));
     pageData = (await flagsmithApi(apiKey, nextPath)) as PaginatedModels<TModel>;
     results.push(...(pageData?.results ?? []));
   }
