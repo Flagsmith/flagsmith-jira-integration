@@ -83,7 +83,8 @@ Use the `tunnel` command to test code (but not manifest) changes without having 
 
     FORGE_USER_VAR_DEBUG=1 forge tunnel
 
-This command always seems to report a "Checking Docker image... failed" error, but it still works. See [Tunneling](https://developer.atlassian.com/platform/forge/tunneling/) for more information.
+This command may report a "Checking Docker image... failed" error and then work anyway. This [may be resolved](https://community.developer.atlassian.com/t/forge-tunnel-error-checking-docker-image/45490/14) by typing `export DOCKER_CLI_HINTS=false` first.
+See [Tunneling](https://developer.atlassian.com/platform/forge/tunneling/) for more information on testing using local files and servers.
 
 Use the `logs` command to see logs (development/staging environment only):
 
