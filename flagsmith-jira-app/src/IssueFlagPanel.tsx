@@ -89,7 +89,7 @@ const IssueFlagTable = ({
   canEdit,
 }: IssueFlagTableProps) => {
   if (featureIds.length === 0) {
-    return <Text>No Flagsmith features are associated with this issue.</Text>;
+    return <Text>No feature flags are linked to this issue.</Text>;
   }
 
   let first = true;
@@ -315,7 +315,7 @@ type EditActionProps = {
 
 const EditAction = ({ editing, setEditing }: EditActionProps) => (
   <IssuePanelAction
-    text={editing ? "View features" : "Edit features"}
+    text={editing ? "View feature flags" : "Edit feature flags"}
     onClick={() => {
       setEditing(!editing);
     }}

@@ -15,7 +15,7 @@ modules:
   jira:issuePanel:
     - key: issue-view-flag
       function: fn-issue-view-flag
-      title: Flagsmith features
+      title: Linked feature flags
       icon: resource:static;logo.svg
   function:
     - key: fn-app-settings
