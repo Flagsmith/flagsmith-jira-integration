@@ -7,7 +7,6 @@ import ForgeUI, {
   Form,
   Fragment,
   Head,
-  Heading,
   IssuePanel,
   IssuePanelAction,
   JiraContext,
@@ -16,6 +15,7 @@ import ForgeUI, {
   Row,
   Select,
   StatusLozenge,
+  Strong,
   Table,
   Text,
   useEffect,
@@ -92,18 +92,25 @@ const IssueFlagTable = ({
     return <Text>No Flagsmith features are associated with this issue.</Text>;
   }
 
+  let first = true;
   return (
     <Fragment>
       {featureIds.map((featureId) => {
         const feature = features.find((each) => String(each.id) === String(featureId));
+        // add vertical space to separate the previous feature's Remove button from this feature
+        const spacer = first ? null : <Text>&nbsp;</Text>;
+        first = false;
         return (
           !!feature && (
             <Fragment key={featureId}>
-              <Heading size="small">
-                {feature.name}
-                {feature.description ? ": " : ""}
+              {canEdit && spacer}
+              <Text>
+                <Strong>
+                  {feature.name}
+                  {feature.description ? ": " : ""}
+                </Strong>
                 {feature.description}
-              </Heading>
+              </Text>
               <Table>
                 <Head>
                   <Cell>
