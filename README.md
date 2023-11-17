@@ -4,6 +4,10 @@ This repository contains an outer folder to install and configure the Forge CLI 
 
 See [developer.atlassian.com/platform/forge](https://developer.atlassian.com/platform/forge) for documentation and tutorials explaining Forge.
 
+## Architectural Decisions
+
+See [docs/decisions/README.md](docs/decisions/README.md) for decision records.
+
 ## Forge CLI installation
 
 The following steps reflect the usual [Getting started](https://developer.atlassian.com/platform/forge/getting-started/) instructions but diverge for reproducability and portability reasons.
