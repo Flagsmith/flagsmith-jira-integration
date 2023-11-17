@@ -1,7 +1,10 @@
-import api, { APIResponse, Route, route } from "@forge/api";
+import api, { APIResponse, Route, authorize, route } from "@forge/api";
 import { JiraContext } from "@forge/ui";
 
 import { ApiArgs, ApiError } from "./common";
+
+export const canEditIssue = async (jiraContext: JiraContext): Promise<boolean> =>
+  !!(await authorize().onJiraIssue(String(jiraContext.issueId)).canEdit?.());
 
 type EntityType = "project" | "issue";
 
@@ -40,25 +43,6 @@ const checkResponse = (response: APIResponse, ...codes: number[]): void => {
     throw new ApiError("Unexpected Jira API response:", response.status);
   }
 };
-
-const getEntityPermission = async (
-  entityType: EntityType,
-  jiraContext: JiraContext,
-  ...permissionKeys: string[]
-): Promise<boolean> => {
-  const entityId = String(jiraContext[`${entityType}Id`]);
-  const permissions = permissionKeys.join(",");
-  const data = (await jiraApi(
-    route`/rest/api/3/mypermissions?${entityType}Id=${entityId}&permissions=${permissions}`,
-  )) as { permissions?: Record<string, { havePermission?: boolean }> };
-  return permissionKeys.some((permissionKey) => data?.permissions?.[permissionKey]?.havePermission);
-};
-
-export const canAdminProject = async (jiraContext: JiraContext): Promise<boolean> =>
-  await getEntityPermission("project", jiraContext, "ADMINISTER", "ADMINISTER_PROJECTS");
-
-export const canEditIssue = async (jiraContext: JiraContext): Promise<boolean> =>
-  await getEntityPermission("issue", jiraContext, "EDIT_ISSUES");
 
 const getEntityProperty = async <T>(
   entityType: EntityType,
