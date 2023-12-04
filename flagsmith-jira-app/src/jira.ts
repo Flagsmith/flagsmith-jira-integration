@@ -52,7 +52,9 @@ const getEntityProperty = async <T>(
   const entityId = String(jiraContext[`${entityType}Id`]);
   const data = (await jiraApi(
     route`/rest/api/3/${entityType}/${entityId}/properties/${propertyKey}`,
-    { codes: [404] },
+    {
+      codes: [404],
+    },
   )) as { value?: T };
   return data?.value;
 };
