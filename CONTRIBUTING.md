@@ -11,6 +11,7 @@ suggesting the next steps.
 
 ### A couple things to keep in mind
 
+- Please check your files for styling with pre-commit (`pre-commit install` in the root of the repo).
 - If you've changed APIs, update the documentation.
 - Keep the code style (indents, wrapping) consistent.
 - If your PR involves a lot of commits, squash them using `git rebase -i` as this makes it easier for us to review.
