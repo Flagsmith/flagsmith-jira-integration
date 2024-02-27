@@ -3,7 +3,7 @@ import ForgeUI, {
   Button,
   ButtonSet,
   Cell,
-  DateLozenge,
+  // DateLozenge,
   Form,
   Fragment,
   Head,
@@ -27,8 +27,8 @@ import {
   EnvironmentModel,
   FLAGSMITH_APP,
   FeatureModel,
-  FeatureStateValue,
-  FlagModel,
+  // FeatureStateValue,
+  // FlagModel,
   fetchEnvironments,
   fetchFeatures,
   fetchFlags,
@@ -70,24 +70,57 @@ const IssueFlagForm = ({ features, featureIds, onAdd }: IssueFlagFormProps) => {
 };
 
 type IssueFlagTableProps = {
+  apiKey: string;
   projectUrl: string;
   environments: EnvironmentModel[];
   features: FeatureModel[];
-  flags: Record<string, FlagModel[]>;
   featureIds: string[];
   onRemove: (featureId: string) => Promise<void>;
   canEdit: boolean;
 };
 
 const IssueFlagTable = ({
-  projectUrl,
+  apiKey,
   environments,
   features,
-  flags,
   featureIds,
   onRemove,
   canEdit,
+  projectUrl,
 }: IssueFlagTableProps) => {
+  const [environmentFlags, setEnvironmentFlags] = useState<any>([]);
+
+  useEffect(async () => {
+    const featuresFiltered = features.filter((f) => featureIds.includes(String(f.id)));
+    try {
+      if (environments.length > 0 && featuresFiltered.length > 0) {
+        const flags: any = {};
+        for (const feature of featuresFiltered) {
+          flags[String(feature.name)] = { 
+            name: feature.name,
+            feature_id: feature.id,
+            description: feature.description,
+            environments: [],
+          };
+
+          for (const environment of environments) {
+            const flagsData = await fetchFlags({
+              apiKey,
+              featureName: feature.name,
+              envAPIKey: String(environment.api_key),
+            });
+            flagsData.name = environment.name;
+            flags[String(feature.name)].environments.push(flagsData);
+          }
+        }
+        const flagsArray = Object.keys(flags).map((featureName) => flags[featureName]);
+        setEnvironmentFlags(flagsArray);
+      }
+    } catch (error) {
+      if (!(error instanceof Error)) throw error;
+    }
+  }, [apiKey, featureIds, environments, features]);
+
   if (featureIds.length === 0) {
     return <Text>No feature flags are linked to this issue.</Text>;
   }
@@ -95,21 +128,19 @@ const IssueFlagTable = ({
   let first = true;
   return (
     <Fragment>
-      {featureIds.map((featureId) => {
-        const feature = features.find((each) => String(each.id) === String(featureId));
-        // add vertical space to separate the previous feature's Remove button from this feature
+      {environmentFlags.map((environmentFlag: any) => {
         const spacer = first ? null : <Text>&nbsp;</Text>;
         first = false;
         return (
-          !!feature && (
-            <Fragment key={featureId}>
+          !!environmentFlag && (
+            <Fragment key={environmentFlag.feature_id}>
               {canEdit && spacer}
               <Text>
                 <Strong>
-                  {feature.name}
-                  {feature.description ? ": " : ""}
+                  {environmentFlag.name}
+                  {environmentFlag.description ? ": " : ""}
                 </Strong>
-                {feature.description}
+                {environmentFlag.description}
               </Text>
               <Table>
                 <Head>
@@ -126,46 +157,23 @@ const IssueFlagTable = ({
                     <Text>Last updated</Text>
                   </Cell>
                 </Head>
-                {environments.map((environment) => {
-                  const environmentFlags = flags[String(environment.id)] ?? [];
-                  // get the default state for this environment
-                  const flag = environmentFlags.find(
-                    (each) =>
-                      String(each.feature) === String(featureId) &&
-                      each.feature_segment === null &&
-                      each.identity === null,
-                  );
-                  if (!flag) return null;
-                  const value: Partial<FeatureStateValue> = flag.feature_state_value ?? {};
-                  // count variations/overrides
-                  const variations = flag.multivariate_feature_state_values.length;
-                  const segments = environmentFlags.filter(
-                    (each) =>
-                      String(each.feature) === String(featureId) && each.feature_segment !== null,
-                  ).length;
-                  const identities = environmentFlags.filter(
-                    (each) => String(each.feature) === String(featureId) && each.identity !== null,
-                  ).length;
+                {environmentFlag?.environments.map((environment: any) => {
+                  if (!environment) return null;
+                  // count overrides
+                  const segments = environment.feature_segment || 0;
+                  const identities = environment.identity || 0;
                   return (
-                    <Row key={String(featureId)}>
+                    <Row key={String(environmentFlag.feature_id)}>
                       <Cell>
                         <Text>
                           <Link
-                            href={`${projectUrl}/environment/${environment.api_key}/features?feature=${featureId}`}
+                            href={`${projectUrl}/environment/${environment.api_key}/features?feature=${environmentFlag.feature_id}`}
                             appearance="link"
                             openNewTab
                           >
                             {environment.name}
                           </Link>
                         </Text>
-                        {variations > 0 && (
-                          <Text>
-                            <Badge
-                              appearance="default"
-                              text={`${variations} variation${variations === 1 ? "" : "s"}`}
-                            />
-                          </Text>
-                        )}
                         {segments > 0 && (
                           <Text>
                             <Badge
@@ -186,34 +194,23 @@ const IssueFlagTable = ({
                       <Cell>
                         <Text>
                           <StatusLozenge
-                            appearance={flag.enabled ? "success" : "default"}
-                            text={flag.enabled ? "on" : "off"}
+                            appearance={environment.enabled ? "success" : "default"}
+                            text={environment.enabled ? "on" : "off"}
                           />
                         </Text>
                       </Cell>
-                      <Cell>
-                        {value.type === "unicode" ? (
-                          <Text>{JSON.stringify(value.string_value)}</Text>
-                        ) : value.type === "int" ? (
-                          <Text>{JSON.stringify(value.integer_value)}</Text>
-                        ) : value.type === "bool" ? (
-                          <Text>{JSON.stringify(!!value.boolean_value)}</Text>
-                        ) : (
-                          <Text>Unknown type: {value.type}</Text>
-                        )}
-                      </Cell>
-                      <Cell>
-                        <Text>
-                          <DateLozenge value={new Date(flag.updated_at).getTime()} />
-                        </Text>
-                      </Cell>
-                    </Row>
-                  );
+                    {/* <Cell>
+                      <Text>
+                        <DateLozenge value={new Date(environment.feature.updated_at).getTime()} />
+                      </Text>
+                    </Cell> */}
+                  </Row>
+                );
                 })}
               </Table>
               {canEdit && (
                 <ButtonSet>
-                  <Button text="Unlink from issue" onClick={() => onRemove(featureId)} />
+                  <Button text="Unlink from issue" onClick={() => onRemove(environmentFlag.feature_id)} />
                 </ButtonSet>
               )}
             </Fragment>
@@ -224,7 +221,7 @@ const IssueFlagTable = ({
   );
 };
 
-type Flags = Record<string, FlagModel[]>;
+// type Flags = Record<string, FlagModel[]>;
 
 type IssueFlagPanelProps = {
   setError: (error: Error) => void;
@@ -248,8 +245,6 @@ const IssueFlagPanel = ({
   const [featureIds, setFeatureIds] = useState(props.featureIds ?? []);
   const [environments, setEnvironments] = useState([] as EnvironmentModel[]);
   const [features, setFeatures] = useState([] as FeatureModel[]);
-  const [flags, setFlags] = useState({} as Flags);
-
   // load environments and features
   useEffect(async () => {
     try {
@@ -263,18 +258,6 @@ const IssueFlagPanel = ({
       );
       // update form state
       setFeatures(features);
-      if (environments.length > 0 && features.length > 0) {
-        // obtain flags from API
-        const flags: Flags = {};
-        for (const environment of environments) {
-          flags[String(environment.id)] = await fetchFlags({
-            apiKey,
-            environmentId: String(environment.id),
-          });
-        }
-        // update form state
-        setFlags(flags);
-      }
     } catch (error) {
       if (!(error instanceof Error)) throw error;
       setError(error);
@@ -295,10 +278,10 @@ const IssueFlagPanel = ({
   return (
     <Fragment>
       <IssueFlagTable
+        apiKey={apiKey}
         projectUrl={projectUrl}
         environments={environments}
         features={features}
-        flags={flags}
         featureIds={featureIds}
         onRemove={onRemove}
         canEdit={canEdit}

@@ -13,25 +13,26 @@ export type ProjectModel = Model;
 export type EnvironmentModel = Model & { api_key: string };
 
 export type FeatureModel = Model & {
+  id: number | string;
   description: string;
   archived_at: string | null;
+  created_date: string;
 };
 
 export type FeatureStateValue = {
-  type: "unicode" | "int" | "bool" | string;
   string_value: string | null;
   boolean_value: boolean | null;
   integer_value: number | null;
 };
 
 export type FlagModel = Model & {
-  enabled: boolean;
-  feature: number;
+  id: number | string;
+  feature_state_value: string | number | boolean;
+  environment: number;
+  identity: string | null;
   feature_segment: number | null;
-  identity: number | null;
-  feature_state_value: FeatureStateValue;
-  multivariate_feature_state_values: unknown[];
-  updated_at: string;
+  enabled: boolean;
+  feature: FeatureModel;
 };
 
 type PaginatedModels<TModel extends Model> = {
@@ -48,19 +49,24 @@ export const FLAGSMITH_APP = "https://app.flagsmith.com";
 const flagsmithApi = async (
   apiKey: string,
   route: Route,
+  envAPIKey: string | null = null,
   { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {},
 ): Promise<unknown> => {
   try {
     const url = `${FLAGSMITH_API_V1}${route.value}`;
     if (process.env.DEBUG) console.debug(method, url);
+    const baseHeaders = {
+      Accept: "application/json",
+      Authorization: `Token ${apiKey}`,
+      ...headers,
+    };
+
+    const requestHeaders = envAPIKey
+      ? { ...baseHeaders, "x-environment-key": envAPIKey }
+      : baseHeaders;
     const response = await api.fetch(url, {
       method,
-      headers: {
-        Accept: "application/json",
-        // TODO change to Api-Key ${apiKey} (for RBAC tokens) before official release
-        Authorization: `Token ${apiKey}`,
-        ...headers,
-      },
+      headers: requestHeaders,
       body,
     });
     checkResponse(response, ...codes);
@@ -157,7 +163,7 @@ export const fetchFeatures = async ({
 }): Promise<FeatureModel[]> => {
   checkApiKey(apiKey);
   if (!projectId) throw new ApiError("Flagsmith project not configured", 400);
-  const path = route`/projects/${projectId}/features/`;
+  const path = route`/features/get-latest-features/${projectId}/`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<FeatureModel>;
   const results = await unpaginate(apiKey, data);
   if (results.length === 0) throw new ApiError("Flagsmith project has no features", 404);
@@ -166,14 +172,16 @@ export const fetchFeatures = async ({
 
 export const fetchFlags = async ({
   apiKey,
-  environmentId,
+  featureName,
+  envAPIKey,
 }: {
   apiKey: string;
-  environmentId: string | undefined;
-}): Promise<FlagModel[]> => {
+  featureName: string;
+  envAPIKey: string;
+}): Promise<FlagModel> => {
   checkApiKey(apiKey);
-  if (!environmentId) throw new ApiError("Flagsmith environment not configured", 400);
-  const path = route`/features/featurestates/?environment=${environmentId}`;
-  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<FlagModel>;
-  return await unpaginate(apiKey, data);
+  if (!featureName) throw new ApiError("Flagsmith environment not configured", 400);
+  const path = route`/flags/?feature=${featureName}`;
+  const data = (await flagsmithApi(apiKey, path, envAPIKey)) as FlagModel;
+  return data;
 };
