@@ -43,7 +43,7 @@ type PaginatedModels<TModel extends Model> = {
 };
 
 // TODO later: these could be set from environment variables for self-hosted users
-const FLAGSMITH_API_V1 = "https://api.flagsmith.com/api/v1";
+const FLAGSMITH_API_V1 = "https://api.flagsmith.com/api/v1/api/v1";
 export const FLAGSMITH_APP = "https://app.flagsmith.com";
 
 const flagsmithApi = async (
@@ -163,7 +163,7 @@ export const fetchFeatures = async ({
 }): Promise<FeatureModel[]> => {
   checkApiKey(apiKey);
   if (!projectId) throw new ApiError("Flagsmith project not configured", 400);
-  const path = route`/features/get-latest-features/${projectId}/`;
+  const path = route`/features/get-latest-features/${projectId}/?quantity=50`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<FeatureModel>;
   const results = await unpaginate(apiKey, data);
   if (results.length === 0) throw new ApiError("Flagsmith project has no features", 404);

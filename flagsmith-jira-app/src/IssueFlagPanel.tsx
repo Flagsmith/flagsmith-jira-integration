@@ -3,7 +3,7 @@ import ForgeUI, {
   Button,
   ButtonSet,
   Cell,
-  // DateLozenge,
+  DateLozenge,
   Form,
   Fragment,
   Head,
@@ -199,13 +199,18 @@ const IssueFlagTable = ({
                           />
                         </Text>
                       </Cell>
-                    {/* <Cell>
-                      <Text>
-                        <DateLozenge value={new Date(environment.feature.updated_at).getTime()} />
-                      </Text>
-                    </Cell> */}
-                  </Row>
-                );
+                      <Cell>
+                        <Text>{environment.feature_state_value}</Text>
+                      </Cell>
+                      <Cell>
+                        <Text>
+                          <DateLozenge
+                            value={new Date(environment.feature.created_date).getTime()} 
+                          />
+                        </Text>
+                      </Cell>
+                    </Row>
+                  );
                 })}
               </Table>
               {canEdit && (
@@ -221,7 +226,6 @@ const IssueFlagTable = ({
   );
 };
 
-// type Flags = Record<string, FlagModel[]>;
 
 type IssueFlagPanelProps = {
   setError: (error: Error) => void;
