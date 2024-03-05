@@ -27,11 +27,11 @@ import {
   EnvironmentModel,
   FLAGSMITH_APP,
   FeatureModel,
-  // FeatureStateValue,
-  // FlagModel,
+  EnvironmentFeatureState,
+  FlagModel,
   fetchEnvironments,
   fetchFeatures,
-  fetchFlags,
+  fetchFeatureState,
 } from "./flagsmith";
 import { canEditIssue, readFeatureIds, readProjectId, writeFeatureIds } from "./jira";
 import { readApiKey, readOrganisationId } from "./storage";
@@ -94,9 +94,9 @@ const IssueFlagTable = ({
     const featuresFiltered = features.filter((f) => featureIds.includes(String(f.id)));
     try {
       if (environments.length > 0 && featuresFiltered.length > 0) {
-        const flags: any = {};
+        const featureState: any = {};
         for (const feature of featuresFiltered) {
-          flags[String(feature.name)] = { 
+          featureState[String(feature.name)] = {
             name: feature.name,
             feature_id: feature.id,
             description: feature.description,
@@ -104,17 +104,18 @@ const IssueFlagTable = ({
           };
 
           for (const environment of environments) {
-            const flagsData = await fetchFlags({
+            const ffData = await fetchFeatureState({
               apiKey,
               featureName: feature.name,
               envAPIKey: String(environment.api_key),
             });
-            flagsData.name = environment.name;
-            flags[String(feature.name)].environments.push(flagsData);
+            ffData.name = environment.name;
+            ffData.api_key = String(environment.api_key);
+            featureState[String(feature.name)].environments.push(ffData);
           }
         }
-        const flagsArray = Object.keys(flags).map((featureName) => flags[featureName]);
-        setEnvironmentFlags(flagsArray);
+        const ffArray = Object.keys(featureState).map((featureName) => featureState[featureName]);
+        setEnvironmentFlags(ffArray);
       }
     } catch (error) {
       if (!(error instanceof Error)) throw error;
@@ -128,7 +129,7 @@ const IssueFlagTable = ({
   let first = true;
   return (
     <Fragment>
-      {environmentFlags.map((environmentFlag: any) => {
+      {environmentFlags.map((environmentFlag: FlagModel) => {
         const spacer = first ? null : <Text>&nbsp;</Text>;
         first = false;
         return (
@@ -157,23 +158,40 @@ const IssueFlagTable = ({
                     <Text>Last updated</Text>
                   </Cell>
                 </Head>
-                {environmentFlag?.environments.map((environment: any) => {
-                  if (!environment) return null;
-                  // count overrides
-                  const segments = environment.feature_segment || 0;
-                  const identities = environment.identity || 0;
+                {environmentFlag?.environments.map((flag: EnvironmentFeatureState) => {
+                  if (!flag) return null;
+                  // count variations/overrides
+                  const variations = flag.multivariate_feature_state_values.length;
+                  const segments = environmentFlags.filter(
+                    (each: EnvironmentFeatureState) =>
+                      String(each.feature) === String(environmentFlag.feature_id) &&
+                      each.feature_segment !== null,
+                  ).length;
+                  const identities = environmentFlags.filter(
+                    (each: EnvironmentFeatureState) =>
+                      String(each.feature) === String(environmentFlag.feature_id) &&
+                      each.identity !== null,
+                  ).length;
                   return (
                     <Row key={String(environmentFlag.feature_id)}>
                       <Cell>
                         <Text>
                           <Link
-                            href={`${projectUrl}/environment/${environment.api_key}/features?feature=${environmentFlag.feature_id}`}
+                            href={`${projectUrl}/environment/${flag.api_key}/features?feature=${environmentFlag.feature_id}`}
                             appearance="link"
                             openNewTab
                           >
-                            {environment.name}
+                            {flag.name}
                           </Link>
                         </Text>
+                        {variations > 0 && (
+                          <Text>
+                            <Badge
+                              appearance="default"
+                              text={`${variations} variation${variations === 1 ? "" : "s"}`}
+                            />
+                          </Text>
+                        )}
                         {segments > 0 && (
                           <Text>
                             <Badge
@@ -194,19 +212,17 @@ const IssueFlagTable = ({
                       <Cell>
                         <Text>
                           <StatusLozenge
-                            appearance={environment.enabled ? "success" : "default"}
-                            text={environment.enabled ? "on" : "off"}
+                            appearance={flag.enabled ? "success" : "default"}
+                            text={flag.enabled ? "on" : "off"}
                           />
                         </Text>
                       </Cell>
                       <Cell>
-                        <Text>{environment.feature_state_value}</Text>
+                        <Text>{flag.feature_state_value}</Text>
                       </Cell>
                       <Cell>
                         <Text>
-                          <DateLozenge
-                            value={new Date(environment.feature.created_date).getTime()} 
-                          />
+                          <DateLozenge value={new Date(flag.updated_at).getTime()} />
                         </Text>
                       </Cell>
                     </Row>
@@ -215,7 +231,10 @@ const IssueFlagTable = ({
               </Table>
               {canEdit && (
                 <ButtonSet>
-                  <Button text="Unlink from issue" onClick={() => onRemove(environmentFlag.feature_id)} />
+                  <Button
+                    text="Unlink from issue"
+                    onClick={() => onRemove(environmentFlag.feature_id)}
+                  />
                 </ButtonSet>
               )}
             </Fragment>

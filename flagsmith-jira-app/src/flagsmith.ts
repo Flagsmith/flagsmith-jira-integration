@@ -19,20 +19,21 @@ export type FeatureModel = Model & {
   created_date: string;
 };
 
+export type FeatureState = {
+  [key: string]: FlagModel;
+};
+
 export type FeatureStateValue = {
   string_value: string | null;
   boolean_value: boolean | null;
   integer_value: number | null;
 };
 
-export type FlagModel = Model & {
-  id: number | string;
-  feature_state_value: string | number | boolean;
-  environment: number;
-  identity: string | null;
-  feature_segment: number | null;
-  enabled: boolean;
-  feature: FeatureModel;
+export type FlagModel = {
+  name: string;
+  feature_id: string;
+  description: string | null;
+  environments: EnvironmentFeatureState[];
 };
 
 type PaginatedModels<TModel extends Model> = {
@@ -42,6 +43,27 @@ type PaginatedModels<TModel extends Model> = {
   results: TModel[];
 };
 
+export type EnvironmentFeatureState = {
+  id: number;
+  feature_state_value: string | null;
+  multivariate_feature_state_values: any[];
+  identity: number | null;
+  deleted_at: string | null;
+  uuid: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+  live_from: string;
+  version: number;
+  feature: number;
+  environment: number;
+  feature_segment: number | null;
+  change_request: number | null;
+  environment_feature_version: number | null;
+  name: string;
+  api_key: string;
+};
+
 // TODO later: these could be set from environment variables for self-hosted users
 const FLAGSMITH_API_V1 = "https://api.flagsmith.com/api/v1";
 export const FLAGSMITH_APP = "https://app.flagsmith.com";
@@ -49,24 +71,19 @@ export const FLAGSMITH_APP = "https://app.flagsmith.com";
 const flagsmithApi = async (
   apiKey: string,
   route: Route,
-  envAPIKey: string | null = null,
   { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {},
 ): Promise<unknown> => {
   try {
     const url = `${FLAGSMITH_API_V1}${route.value}`;
     if (process.env.DEBUG) console.debug(method, url);
-    const baseHeaders = {
-      Accept: "application/json",
-      Authorization: `Token ${apiKey}`,
-      ...headers,
-    };
-
-    const requestHeaders = envAPIKey
-      ? { ...baseHeaders, "x-environment-key": envAPIKey }
-      : baseHeaders;
     const response = await api.fetch(url, {
       method,
-      headers: requestHeaders,
+      headers: {
+        Accept: "application/json",
+        // TODO change to Api-Key ${apiKey} (for RBAC tokens) before official release
+        Authorization: `Token ${apiKey}`,
+        ...headers,
+      },
       body,
     });
     checkResponse(response, ...codes);
@@ -170,7 +187,7 @@ export const fetchFeatures = async ({
   return results;
 };
 
-export const fetchFlags = async ({
+export const fetchFeatureState = async ({
   apiKey,
   featureName,
   envAPIKey,
@@ -178,10 +195,15 @@ export const fetchFlags = async ({
   apiKey: string;
   featureName: string;
   envAPIKey: string;
-}): Promise<FlagModel> => {
+}): Promise<any> => {
   checkApiKey(apiKey);
-  if (!featureName) throw new ApiError("Flagsmith environment not configured", 400);
-  const path = route`/flags/?feature=${featureName}`;
-  const data = (await flagsmithApi(apiKey, path, envAPIKey)) as FlagModel;
-  return data;
+  if (!envAPIKey) throw new ApiError("Flagsmith environment not configured", 400);
+  const path = route`/environments/${envAPIKey}/featurestates/?feature_name=${featureName}`;
+  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<EnvironmentFeatureState>;
+  const results = await unpaginate(apiKey, data);
+  if (!results || results.length === 0) {
+    throw new ApiError("Flagsmith project has no features", 404);
+  } else {
+    return results[0];
+  }
 };
