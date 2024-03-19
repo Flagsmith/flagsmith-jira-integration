@@ -91,19 +91,22 @@ const IssueFlagTable = ({
   const [environmentFlags, setEnvironmentFlags] = useState<any>([]);
 
   useEffect(async () => {
+    // Filtered features by comparing their IDs with the feature IDs stored in Jira.
     const featuresFiltered = features.filter((f) => featureIds.includes(String(f.id)));
     try {
       if (environments.length > 0 && featuresFiltered.length > 0) {
         const featureState: any = {};
+        // Iterate over each filtered feature.
         for (const feature of featuresFiltered) {
+          // Initialize an object to store the state of the feature.
           featureState[String(feature.name)] = {
             name: feature.name,
             feature_id: feature.id,
             description: feature.description,
             environments: [],
           };
-
           for (const environment of environments) {
+            // Obtain the feature states of the filtered features.
             const ffData = await fetchFeatureState({
               apiKey,
               featureName: feature.name,
@@ -111,6 +114,7 @@ const IssueFlagTable = ({
             });
             ffData.name = environment.name;
             ffData.api_key = String(environment.api_key);
+            // Add the feature state data to the feature state object.
             featureState[String(feature.name)].environments.push(ffData);
           }
         }
