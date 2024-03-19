@@ -70,8 +70,8 @@ const IssueFlagForm = ({ features, featureIds, onAdd }: IssueFlagFormProps) => {
 };
 
 type IssueFlagTableProps = {
-  apiKey: string;
   projectUrl: string;
+  apiKey: string;
   environments: EnvironmentModel[];
   features: FeatureModel[];
   featureIds: string[];
@@ -80,13 +80,13 @@ type IssueFlagTableProps = {
 };
 
 const IssueFlagTable = ({
+  projectUrl,
   apiKey,
   environments,
   features,
   featureIds,
   onRemove,
   canEdit,
-  projectUrl,
 }: IssueFlagTableProps) => {
   const [environmentFlags, setEnvironmentFlags] = useState<any>([]);
 
@@ -130,6 +130,7 @@ const IssueFlagTable = ({
   return (
     <Fragment>
       {environmentFlags.map((environmentFlag: FlagModel) => {
+        // add vertical space to separate the previous feature's Remove button from this feature
         const spacer = first ? null : <Text>&nbsp;</Text>;
         first = false;
         return (
@@ -245,7 +246,6 @@ const IssueFlagTable = ({
   );
 };
 
-
 type IssueFlagPanelProps = {
   setError: (error: Error) => void;
   jiraContext: JiraContext;
@@ -301,8 +301,8 @@ const IssueFlagPanel = ({
   return (
     <Fragment>
       <IssueFlagTable
-        apiKey={apiKey}
         projectUrl={projectUrl}
+        apiKey={apiKey}
         environments={environments}
         features={features}
         featureIds={featureIds}
