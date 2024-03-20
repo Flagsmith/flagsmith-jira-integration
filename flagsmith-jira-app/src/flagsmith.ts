@@ -180,7 +180,7 @@ export const fetchFeatures = async ({
 }): Promise<FeatureModel[]> => {
   checkApiKey(apiKey);
   if (!projectId) throw new ApiError("Flagsmith project not configured", 400);
-  const path = route`/projects/${projectId}/features?page_size=50&sort_field=created_date&sort_direction=DESC`;
+  const path = route`/projects/${projectId}/features/`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<FeatureModel>;
   const results = await unpaginate(apiKey, data);
   if (results.length === 0) throw new ApiError("Flagsmith project has no features", 404);
