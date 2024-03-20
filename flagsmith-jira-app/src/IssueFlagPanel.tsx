@@ -27,11 +27,11 @@ import {
   EnvironmentModel,
   FLAGSMITH_APP,
   FeatureModel,
-  FeatureStateValue,
+  EnvironmentFeatureState,
   FlagModel,
   fetchEnvironments,
   fetchFeatures,
-  fetchFlags,
+  fetchFeatureState,
 } from "./flagsmith";
 import { canEditIssue, readFeatureIds, readProjectId, writeFeatureIds } from "./jira";
 import { readApiKey, readOrganisationId } from "./storage";
@@ -71,9 +71,9 @@ const IssueFlagForm = ({ features, featureIds, onAdd }: IssueFlagFormProps) => {
 
 type IssueFlagTableProps = {
   projectUrl: string;
+  apiKey: string;
   environments: EnvironmentModel[];
   features: FeatureModel[];
-  flags: Record<string, FlagModel[]>;
   featureIds: string[];
   onRemove: (featureId: string) => Promise<void>;
   canEdit: boolean;
@@ -81,13 +81,51 @@ type IssueFlagTableProps = {
 
 const IssueFlagTable = ({
   projectUrl,
+  apiKey,
   environments,
   features,
-  flags,
   featureIds,
   onRemove,
   canEdit,
 }: IssueFlagTableProps) => {
+  const [environmentFlags, setEnvironmentFlags] = useState<any>([]);
+
+  useEffect(async () => {
+    // Filtered features by comparing their IDs with the feature IDs stored in Jira.
+    const featuresFiltered = features.filter((f) => featureIds.includes(String(f.id)));
+    try {
+      if (environments.length > 0 && featuresFiltered.length > 0) {
+        const featureState: any = {};
+        // Iterate over each filtered feature.
+        for (const feature of featuresFiltered) {
+          // Initialize an object to store the state of the feature.
+          featureState[String(feature.name)] = {
+            name: feature.name,
+            feature_id: feature.id,
+            description: feature.description,
+            environments: [],
+          };
+          for (const environment of environments) {
+            // Obtain the feature states of the filtered features.
+            const ffData = await fetchFeatureState({
+              apiKey,
+              featureName: feature.name,
+              envAPIKey: String(environment.api_key),
+            });
+            ffData.name = environment.name;
+            ffData.api_key = String(environment.api_key);
+            // Add the feature state data to the feature state object.
+            featureState[String(feature.name)].environments.push(ffData);
+          }
+        }
+        const ffArray = Object.keys(featureState).map((featureName) => featureState[featureName]);
+        setEnvironmentFlags(ffArray);
+      }
+    } catch (error) {
+      if (!(error instanceof Error)) throw error;
+    }
+  }, [apiKey, featureIds, environments, features]);
+
   if (featureIds.length === 0) {
     return <Text>No feature flags are linked to this issue.</Text>;
   }
@@ -95,21 +133,20 @@ const IssueFlagTable = ({
   let first = true;
   return (
     <Fragment>
-      {featureIds.map((featureId) => {
-        const feature = features.find((each) => String(each.id) === String(featureId));
+      {environmentFlags.map((environmentFlag: FlagModel) => {
         // add vertical space to separate the previous feature's Remove button from this feature
         const spacer = first ? null : <Text>&nbsp;</Text>;
         first = false;
         return (
-          !!feature && (
-            <Fragment key={featureId}>
+          !!environmentFlag && (
+            <Fragment key={environmentFlag.feature_id}>
               {canEdit && spacer}
               <Text>
                 <Strong>
-                  {feature.name}
-                  {feature.description ? ": " : ""}
+                  {environmentFlag.name}
+                  {environmentFlag.description ? ": " : ""}
                 </Strong>
-                {feature.description}
+                {environmentFlag.description}
               </Text>
               <Table>
                 <Head>
@@ -126,36 +163,30 @@ const IssueFlagTable = ({
                     <Text>Last updated</Text>
                   </Cell>
                 </Head>
-                {environments.map((environment) => {
-                  const environmentFlags = flags[String(environment.id)] ?? [];
-                  // get the default state for this environment
-                  const flag = environmentFlags.find(
-                    (each) =>
-                      String(each.feature) === String(featureId) &&
-                      each.feature_segment === null &&
-                      each.identity === null,
-                  );
+                {environmentFlag?.environments.map((flag: EnvironmentFeatureState) => {
                   if (!flag) return null;
-                  const value: Partial<FeatureStateValue> = flag.feature_state_value ?? {};
                   // count variations/overrides
                   const variations = flag.multivariate_feature_state_values.length;
                   const segments = environmentFlags.filter(
-                    (each) =>
-                      String(each.feature) === String(featureId) && each.feature_segment !== null,
+                    (each: EnvironmentFeatureState) =>
+                      String(each.feature) === String(environmentFlag.feature_id) &&
+                      each.feature_segment !== null,
                   ).length;
                   const identities = environmentFlags.filter(
-                    (each) => String(each.feature) === String(featureId) && each.identity !== null,
+                    (each: EnvironmentFeatureState) =>
+                      String(each.feature) === String(environmentFlag.feature_id) &&
+                      each.identity !== null,
                   ).length;
                   return (
-                    <Row key={String(featureId)}>
+                    <Row key={String(environmentFlag.feature_id)}>
                       <Cell>
                         <Text>
                           <Link
-                            href={`${projectUrl}/environment/${environment.api_key}/features?feature=${featureId}`}
+                            href={`${projectUrl}/environment/${flag.api_key}/features?feature=${environmentFlag.feature_id}`}
                             appearance="link"
                             openNewTab
                           >
-                            {environment.name}
+                            {flag.name}
                           </Link>
                         </Text>
                         {variations > 0 && (
@@ -192,15 +223,7 @@ const IssueFlagTable = ({
                         </Text>
                       </Cell>
                       <Cell>
-                        {value.type === "unicode" ? (
-                          <Text>{JSON.stringify(value.string_value)}</Text>
-                        ) : value.type === "int" ? (
-                          <Text>{JSON.stringify(value.integer_value)}</Text>
-                        ) : value.type === "bool" ? (
-                          <Text>{JSON.stringify(!!value.boolean_value)}</Text>
-                        ) : (
-                          <Text>Unknown type: {value.type}</Text>
-                        )}
+                        <Text>{flag.feature_state_value}</Text>
                       </Cell>
                       <Cell>
                         <Text>
@@ -213,7 +236,10 @@ const IssueFlagTable = ({
               </Table>
               {canEdit && (
                 <ButtonSet>
-                  <Button text="Unlink from issue" onClick={() => onRemove(featureId)} />
+                  <Button
+                    text="Unlink from issue"
+                    onClick={() => onRemove(environmentFlag.feature_id)}
+                  />
                 </ButtonSet>
               )}
             </Fragment>
@@ -223,8 +249,6 @@ const IssueFlagTable = ({
     </Fragment>
   );
 };
-
-type Flags = Record<string, FlagModel[]>;
 
 type IssueFlagPanelProps = {
   setError: (error: Error) => void;
@@ -248,8 +272,6 @@ const IssueFlagPanel = ({
   const [featureIds, setFeatureIds] = useState(props.featureIds ?? []);
   const [environments, setEnvironments] = useState([] as EnvironmentModel[]);
   const [features, setFeatures] = useState([] as FeatureModel[]);
-  const [flags, setFlags] = useState({} as Flags);
-
   // load environments and features
   useEffect(async () => {
     try {
@@ -263,18 +285,6 @@ const IssueFlagPanel = ({
       );
       // update form state
       setFeatures(features);
-      if (environments.length > 0 && features.length > 0) {
-        // obtain flags from API
-        const flags: Flags = {};
-        for (const environment of environments) {
-          flags[String(environment.id)] = await fetchFlags({
-            apiKey,
-            environmentId: String(environment.id),
-          });
-        }
-        // update form state
-        setFlags(flags);
-      }
     } catch (error) {
       if (!(error instanceof Error)) throw error;
       setError(error);
@@ -296,9 +306,9 @@ const IssueFlagPanel = ({
     <Fragment>
       <IssueFlagTable
         projectUrl={projectUrl}
+        apiKey={apiKey}
         environments={environments}
         features={features}
-        flags={flags}
         featureIds={featureIds}
         onRemove={onRemove}
         canEdit={canEdit}

@@ -13,25 +13,27 @@ export type ProjectModel = Model;
 export type EnvironmentModel = Model & { api_key: string };
 
 export type FeatureModel = Model & {
+  id: number | string;
   description: string;
   archived_at: string | null;
+  created_date: string;
+};
+
+export type FeatureState = {
+  [key: string]: FlagModel;
 };
 
 export type FeatureStateValue = {
-  type: "unicode" | "int" | "bool" | string;
   string_value: string | null;
   boolean_value: boolean | null;
   integer_value: number | null;
 };
 
-export type FlagModel = Model & {
-  enabled: boolean;
-  feature: number;
-  feature_segment: number | null;
-  identity: number | null;
-  feature_state_value: FeatureStateValue;
-  multivariate_feature_state_values: unknown[];
-  updated_at: string;
+export type FlagModel = {
+  name: string;
+  feature_id: string;
+  description: string | null;
+  environments: EnvironmentFeatureState[];
 };
 
 type PaginatedModels<TModel extends Model> = {
@@ -39,6 +41,27 @@ type PaginatedModels<TModel extends Model> = {
   next: string | null;
   previous: string | null;
   results: TModel[];
+};
+
+export type EnvironmentFeatureState = {
+  id: number;
+  feature_state_value: string | null;
+  multivariate_feature_state_values: any[];
+  identity: number | null;
+  deleted_at: string | null;
+  uuid: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+  live_from: string;
+  version: number;
+  feature: number;
+  environment: number;
+  feature_segment: number | null;
+  change_request: number | null;
+  environment_feature_version: number | null;
+  name: string;
+  api_key: string;
 };
 
 // TODO later: these could be set from environment variables for self-hosted users
@@ -164,16 +187,23 @@ export const fetchFeatures = async ({
   return results;
 };
 
-export const fetchFlags = async ({
+export const fetchFeatureState = async ({
   apiKey,
-  environmentId,
+  featureName,
+  envAPIKey,
 }: {
   apiKey: string;
-  environmentId: string | undefined;
-}): Promise<FlagModel[]> => {
+  featureName: string;
+  envAPIKey: string;
+}): Promise<any> => {
   checkApiKey(apiKey);
-  if (!environmentId) throw new ApiError("Flagsmith environment not configured", 400);
-  const path = route`/features/featurestates/?environment=${environmentId}`;
-  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<FlagModel>;
-  return await unpaginate(apiKey, data);
+  if (!envAPIKey) throw new ApiError("Flagsmith environment not configured", 400);
+  const path = route`/environments/${envAPIKey}/featurestates/?feature_name=${featureName}`;
+  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<EnvironmentFeatureState>;
+  const results = await unpaginate(apiKey, data);
+  if (!results || results.length === 0) {
+    throw new ApiError("Flagsmith project has no features", 404);
+  } else {
+    return results[0];
+  }
 };
