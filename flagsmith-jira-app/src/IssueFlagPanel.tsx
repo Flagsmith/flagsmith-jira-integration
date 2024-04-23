@@ -40,13 +40,15 @@ import { readApiKey, readOrganisationId } from "./storage";
 ForgeUI;
 
 type IssueFlagFormProps = {
-  features: FeatureModel[];
-  featureIds: string[];
+  flagsmithFeatures: FeatureModel[];
+  jiraFeatureIds: string[];
   onAdd: (featureId: string) => Promise<void>;
 };
 
-const IssueFlagForm = ({ features, featureIds, onAdd }: IssueFlagFormProps) => {
-  const addableFeatures = features.filter((feature) => !featureIds.includes(String(feature.id)));
+const IssueFlagForm = ({ flagsmithFeatures, jiraFeatureIds, onAdd }: IssueFlagFormProps) => {
+  const addableFeatures = flagsmithFeatures.filter(
+    (feature) => !jiraFeatureIds.includes(String(feature.id)),
+  );
 
   return (
     <Fragment>
@@ -73,8 +75,8 @@ type IssueFlagTableProps = {
   projectUrl: string;
   apiKey: string;
   environments: EnvironmentModel[];
-  features: FeatureModel[];
-  featureIds: string[];
+  flagsmithFeatures: FeatureModel[];
+  jiraFeatureIds: string[];
   onRemove: (featureId: string) => Promise<void>;
   canEdit: boolean;
 };
@@ -83,8 +85,8 @@ const IssueFlagTable = ({
   projectUrl,
   apiKey,
   environments,
-  features,
-  featureIds,
+  flagsmithFeatures,
+  jiraFeatureIds,
   onRemove,
   canEdit,
 }: IssueFlagTableProps) => {
@@ -92,12 +94,14 @@ const IssueFlagTable = ({
 
   useEffect(async () => {
     // Filtered features by comparing their IDs with the feature IDs stored in Jira.
-    const featuresFiltered = features.filter((f) => featureIds.includes(String(f.id)));
+    const flagsmithfeaturesFiltered = flagsmithFeatures.filter((f) =>
+      jiraFeatureIds.includes(String(f.id)),
+    );
     try {
-      if (environments.length > 0 && featuresFiltered.length > 0) {
+      if (environments.length > 0 && flagsmithfeaturesFiltered.length > 0) {
         const featureState: any = {};
         // Iterate over each filtered feature.
-        for (const feature of featuresFiltered) {
+        for (const feature of flagsmithfeaturesFiltered) {
           // Initialize an object to store the state of the feature.
           featureState[String(feature.name)] = {
             name: feature.name,
@@ -120,13 +124,15 @@ const IssueFlagTable = ({
         }
         const ffArray = Object.keys(featureState).map((featureName) => featureState[featureName]);
         setEnvironmentFlags(ffArray);
+      } else {
+        setEnvironmentFlags([]);
       }
     } catch (error) {
       if (!(error instanceof Error)) throw error;
     }
-  }, [apiKey, featureIds, environments, features]);
+  }, [apiKey, jiraFeatureIds, environments, flagsmithFeatures]);
 
-  if (featureIds.length === 0) {
+  if (jiraFeatureIds.length === 0) {
     return <Text>No feature flags are linked to this issue.</Text>;
   }
 
@@ -178,7 +184,7 @@ const IssueFlagTable = ({
                       each.identity !== null,
                   ).length;
                   return (
-                    <Row key={String(environmentFlag.feature_id)}>
+                    <Row key={String(`${environmentFlag.feature_id}`)}>
                       <Cell>
                         <Text>
                           <Link
@@ -238,7 +244,7 @@ const IssueFlagTable = ({
                 <ButtonSet>
                   <Button
                     text="Unlink from issue"
-                    onClick={() => onRemove(environmentFlag.feature_id)}
+                    onClick={() => onRemove(`${environmentFlag.feature_id}`)}
                   />
                 </ButtonSet>
               )}
@@ -256,7 +262,7 @@ type IssueFlagPanelProps = {
   apiKey: string;
   organisationId: string;
   projectId: string | undefined;
-  featureIds: string[] | undefined;
+  jiraFeatureIds: string[] | undefined;
   canEdit: boolean;
 };
 
@@ -269,7 +275,7 @@ const IssueFlagPanel = ({
   ...props
 }: IssueFlagPanelProps) => {
   // set initial state
-  const [featureIds, setFeatureIds] = useState(props.featureIds ?? []);
+  const [jiraFeatureIds, setJiraFeatureIds] = useState(props.jiraFeatureIds ?? []);
   const [environments, setEnvironments] = useState([] as EnvironmentModel[]);
   const [features, setFeatures] = useState([] as FeatureModel[]);
   // load environments and features
@@ -291,15 +297,15 @@ const IssueFlagPanel = ({
     }
   }, [apiKey, String(projectId)]);
 
-  const onChange = async (featureIds: string[]) => {
+  const onChange = async (jiraFeatureIds: string[]) => {
     // persist to storage
-    await writeFeatureIds(jiraContext, featureIds);
+    await writeFeatureIds(jiraContext, jiraFeatureIds);
     // update state
-    setFeatureIds(featureIds);
+    setJiraFeatureIds(jiraFeatureIds);
   };
-  const onAdd = (featureId: string) => onChange([...featureIds, featureId]);
+  const onAdd = (featureId: string) => onChange([...jiraFeatureIds, featureId]);
   const onRemove = (featureId: string) =>
-    onChange(featureIds.filter((each) => String(each) !== featureId));
+    onChange(jiraFeatureIds.filter((each) => String(each) !== featureId));
 
   const projectUrl = `${FLAGSMITH_APP}/project/${projectId}`;
   return (
@@ -308,12 +314,14 @@ const IssueFlagPanel = ({
         projectUrl={projectUrl}
         apiKey={apiKey}
         environments={environments}
-        features={features}
-        featureIds={featureIds}
+        flagsmithFeatures={features}
+        jiraFeatureIds={jiraFeatureIds}
         onRemove={onRemove}
         canEdit={canEdit}
       />
-      {canEdit && <IssueFlagForm features={features} featureIds={featureIds} onAdd={onAdd} />}
+      {canEdit && (
+        <IssueFlagForm flagsmithFeatures={features} jiraFeatureIds={jiraFeatureIds} onAdd={onAdd} />
+      )}
     </Fragment>
   );
 };
@@ -339,9 +347,9 @@ export default () => {
   const [organisationId, setOrganisationId] = useState(readOrganisationId);
   const jiraContext = useJiraContext();
   const [projectId, setProjectId] = useState(() => readProjectId(jiraContext));
-  const [featureIds, setFeatureIds] = useState(() => readFeatureIds(jiraContext));
+  const [jiraFeatureIds, setJiraFeatureIds] = useState(() => readFeatureIds(jiraContext));
   const [canEdit, setCanEdit] = useState(() => canEditIssue(jiraContext));
-  const [editing, setEditing] = useState(!(featureIds ?? []).length);
+  const [editing, setEditing] = useState(!(jiraFeatureIds ?? []).length);
 
   const actions = canEdit
     ? [<EditAction key="edit" editing={editing} setEditing={setEditing} />]
@@ -356,7 +364,7 @@ export default () => {
             jiraContext={jiraContext}
             organisationId={organisationId}
             projectId={projectId}
-            featureIds={featureIds}
+            jiraFeatureIds={jiraFeatureIds}
             canEdit={canEdit && editing}
           />
         )}
@@ -364,7 +372,7 @@ export default () => {
           setApiKey(await readApiKey());
           setOrganisationId(await readOrganisationId());
           setProjectId(await readProjectId(jiraContext));
-          setFeatureIds(await readFeatureIds(jiraContext));
+          setJiraFeatureIds(await readFeatureIds(jiraContext));
           setCanEdit(await canEditIssue(jiraContext));
         }}
       />
