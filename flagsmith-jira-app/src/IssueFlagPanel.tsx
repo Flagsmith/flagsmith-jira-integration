@@ -81,6 +81,10 @@ type IssueFlagTableProps = {
   canEdit: boolean;
 };
 
+type FeatureState = FlagModel & {
+  [key: string]: string | number | EnvironmentFeatureState[];
+};
+
 const IssueFlagTable = ({
   projectUrl,
   apiKey,
@@ -90,7 +94,7 @@ const IssueFlagTable = ({
   onRemove,
   canEdit,
 }: IssueFlagTableProps) => {
-  const [environmentFlags, setEnvironmentFlags] = useState<any>([]);
+  const [environmentFlags, setEnvironmentFlags] = useState<FeatureState[]>([]);
 
   useEffect(async () => {
     // Filtered features by comparing their IDs with the feature IDs stored in Jira.
@@ -99,7 +103,7 @@ const IssueFlagTable = ({
     );
     try {
       if (environments.length > 0 && flagsmithfeaturesFiltered.length > 0) {
-        const featureState: any = {};
+        const featureState: { [key: string]: FeatureState } = {};
         // Iterate over each filtered feature.
         for (const feature of flagsmithfeaturesFiltered) {
           // Initialize an object to store the state of the feature.
@@ -119,11 +123,13 @@ const IssueFlagTable = ({
             ffData.name = environment.name;
             ffData.api_key = String(environment.api_key);
             // Add the feature state data to the feature state object.
-            featureState[String(feature.name)].environments.push(ffData);
+            featureState[String(feature.name)]?.environments.push(ffData);
           }
         }
-        const ffArray = Object.keys(featureState).map((featureName) => featureState[featureName]);
-        setEnvironmentFlags(ffArray);
+        const ffArray = Object.keys(featureState).map(
+          (featureName) => featureState[featureName],
+        ) as FeatureState[];
+        setEnvironmentFlags(ffArray as FeatureState[]);
       } else {
         setEnvironmentFlags([]);
       }
@@ -139,7 +145,7 @@ const IssueFlagTable = ({
   let first = true;
   return (
     <Fragment>
-      {environmentFlags.map((environmentFlag: FlagModel) => {
+      {environmentFlags.map((environmentFlag: FeatureState) => {
         // add vertical space to separate the previous feature's Remove button from this feature
         const spacer = first ? null : <Text>&nbsp;</Text>;
         first = false;
@@ -173,12 +179,12 @@ const IssueFlagTable = ({
                   if (!flag) return null;
                   // count variations/overrides
                   const variations = flag.multivariate_feature_state_values.length;
-                  const segments = environmentFlags.filter(
+                  const segments = environmentFlag.environments.filter(
                     (each: EnvironmentFeatureState) =>
                       String(each.feature) === String(environmentFlag.feature_id) &&
                       each.feature_segment !== null,
                   ).length;
-                  const identities = environmentFlags.filter(
+                  const identities = environmentFlag.environments.filter(
                     (each: EnvironmentFeatureState) =>
                       String(each.feature) === String(environmentFlag.feature_id) &&
                       each.identity !== null,
