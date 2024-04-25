@@ -31,7 +31,7 @@ export type FeatureStateValue = {
 
 export type FlagModel = {
   name: string;
-  feature_id: string;
+  feature_id: string | number;
   description: string | null;
   environments: EnvironmentFeatureState[];
 };
@@ -46,7 +46,11 @@ type PaginatedModels<TModel extends Model> = {
 export type EnvironmentFeatureState = {
   id: number;
   feature_state_value: string | null;
-  multivariate_feature_state_values: any[];
+  multivariate_feature_state_values: {
+    id: number;
+    multivariate_feature_option: number;
+    percentage_allocation: number;
+  }[];
   identity: number | null;
   deleted_at: string | null;
   uuid: string;
@@ -195,7 +199,7 @@ export const fetchFeatureState = async ({
   apiKey: string;
   featureName: string;
   envAPIKey: string;
-}): Promise<any> => {
+}): Promise<EnvironmentFeatureState> => {
   checkApiKey(apiKey);
   if (!envAPIKey) throw new ApiError("Flagsmith environment not configured", 400);
   const path = route`/environments/${envAPIKey}/featurestates/?feature_name=${featureName}`;
@@ -204,6 +208,6 @@ export const fetchFeatureState = async ({
   if (!results || results.length === 0) {
     throw new ApiError("Flagsmith project has no features", 404);
   } else {
-    return results[0];
+    return results[0] as EnvironmentFeatureState;
   }
 };
