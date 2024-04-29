@@ -1,0 +1,27 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.0
+    hooks:
+      - id: prettier
+
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.55.0
+    hooks:
+      - id: eslint
+        additional_dependencies:
+          - eslint@8.55.0
+          - eslint-loader@4.0.2
+          - eslint-plugin-react@7.33.2
+          - babel-eslint@10.1.0
+        exclude: |
+          (?x)^(
+              package.json|
+              tests/.*
+          )$
