@@ -71,8 +71,8 @@ const setEntityProperty = async <T>(
     body: JSON.stringify(value),
     jsonResponse: false,
     headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
+      Accept: 'application/json',
+      "Content-Type": 'application/json'
     },
   });
 };
