@@ -72,7 +72,7 @@ const setEntityProperty = async <T>(
     jsonResponse: false,
     headers: {
       "Accept": "application/json",
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
   });
 };
