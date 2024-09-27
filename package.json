@@ -1,6 +1,7 @@
 {
     "dependencies": {
-        "@forge/cli": "6.20.2",
-        "dotenv-export": "2.0.0"
+        "@forge/cli": "^6.20.2",
+        "dotenv-export": "^2.0.0",
+        "elliptic": "^6.5.7"
     }
 }
