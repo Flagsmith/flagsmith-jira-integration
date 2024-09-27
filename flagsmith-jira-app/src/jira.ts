@@ -70,6 +70,10 @@ const setEntityProperty = async <T>(
     method: "PUT",
     body: JSON.stringify(value),
     jsonResponse: false,
+    headers: {
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+    },
   });
 };
 
