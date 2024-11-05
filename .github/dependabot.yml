@@ -1,0 +1,9 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - "/"
+      - "/flagsmith-jira-app"
+    schedule:
+      interval: daily
+      time: "08:00"
