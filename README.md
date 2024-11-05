@@ -34,7 +34,7 @@ Forge instructions start by
 [installing the CLI globally](https://developer.atlassian.com/platform/forge/getting-started/#install-the-forge-cli) but
 instead we will use a local installation with pinned requirements:
 
-    npm ci
+    npm i @forge/cli -g
 
 The Forge CLI is then available by typing `npx forge`.
 
