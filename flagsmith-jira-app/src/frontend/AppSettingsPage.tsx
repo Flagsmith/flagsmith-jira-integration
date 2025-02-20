@@ -13,7 +13,7 @@ import ForgeUI, {
 } from "@forge/ui";
 
 import { ApiError, ErrorWrapper } from "./common";
-import { OrganisationModel, fetchOrganisations } from "./flagsmith";
+import { OrganisationModel, fetchOrganisations } from "../flagsmith";
 import {
   deleteApiKey,
   deleteOrganisationId,
@@ -21,7 +21,7 @@ import {
   readOrganisationId,
   writeApiKey,
   writeOrganisationId,
-} from "./storage";
+} from "../storage";
 
 // dummy call to stop the linter removing unused import
 ForgeUI;

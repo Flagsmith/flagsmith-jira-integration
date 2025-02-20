@@ -32,9 +32,9 @@ import {
   fetchEnvironments,
   fetchFeatures,
   fetchFeatureState,
-} from "./flagsmith";
-import { canEditIssue, readFeatureIds, readProjectId, writeFeatureIds } from "./jira";
-import { readApiKey, readOrganisationId } from "./storage";
+} from "../flagsmith";
+import { canEditIssue, readFeatureIds, readProjectId, writeFeatureIds } from "../jira";
+import { readApiKey, readOrganisationId } from "../storage";
 
 // dummy call to stop the linter removing JSX-enabling import
 ForgeUI;

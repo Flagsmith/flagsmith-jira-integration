@@ -1,6 +1,6 @@
 import api, { APIResponse, Route, assumeTrustedRoute, route } from "@forge/api";
 
-import { ApiArgs, ApiError } from "./common";
+import { ApiArgs, ApiError } from "./frontend/common";
 
 type Model = {
   id: number;

@@ -1,7 +1,7 @@
 import api, { APIResponse, Route, authorize, route } from "@forge/api";
 import { JiraContext } from "@forge/ui";
 
-import { ApiArgs, ApiError } from "./common";
+import { ApiArgs, ApiError } from "./frontend/common";
 
 export const canEditIssue = async (jiraContext: JiraContext): Promise<boolean> =>
   !!(await authorize().onJiraIssue(String(jiraContext.issueId)).canEdit?.());

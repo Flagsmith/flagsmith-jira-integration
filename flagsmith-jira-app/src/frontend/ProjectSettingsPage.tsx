@@ -1,25 +1,20 @@
-import ForgeUI, {
+import { Fragment, useEffect, useState } from "react";
+import {
   Button,
   Form,
-  Fragment,
   JiraContext,
   Option,
   ProjectSettingsPage,
   Select,
-  StatusLozenge,
+  Lozenge,
   Strong,
   Text,
-  useEffect,
-  useState,
-} from "@forge/ui";
+} from "@forge/react";
 
 import { ErrorWrapper, useJiraContext } from "./common";
-import { ProjectModel, fetchProjects } from "./flagsmith";
-import { readProjectId, writeProjectId } from "./jira";
-import { readApiKey, readOrganisationId } from "./storage";
-
-// dummy call to stop the linter removing JSX-enabling import
-ForgeUI;
+import { ProjectModel, fetchProjects } from "../flagsmith";
+import { readProjectId, writeProjectId } from "../jira";
+import { readApiKey, readOrganisationId } from "../storage";
 
 type ProjectSettingsFormProps = {
   setError: (error: Error) => void;
@@ -86,21 +81,22 @@ const ProjectSettingsForm = ({
   return (
     <Fragment>
       <Text>
-        <Strong>Status:</Strong>{" "}
-        {!apiKey && <StatusLozenge appearance="moved" text="Not Configured" />}
+        <Strong>Status:</Strong> {!apiKey && <Lozenge appearance="moved">Not Configured</Lozenge>}
         {!!apiKey && projects.length === 0 && (
-          <StatusLozenge appearance="removed" text="Invalid key or no projects" />
+          <Lozenge appearance="removed">Invalid key or no projects</Lozenge>
         )}
-        {projects.length > 0 && !project && (
-          <StatusLozenge appearance="moved" text="Not Connected" />
-        )}
-        {!!apiKey && !!project && <StatusLozenge appearance="success" text="Connected" />}
+        {projects.length > 0 && !project && <Lozenge appearance="moved">Not Connected</Lozenge>}
+        {!!apiKey && !!project && <Lozenge appearance="success">Connected</Lozenge>}
       </Text>
       {projects.length > 0 && (
         <Form
           onSubmit={onSave}
           submitButtonText="Save"
-          actionButtons={[<Button key="clear" text="Clear" onClick={onClear} />]}
+          actionButtons={[
+            <Button key="clear" onClick={onClear}>
+              Clear
+            </Button>,
+          ]}
         >
           <Select
             name="projectId"
