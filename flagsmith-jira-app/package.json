@@ -17,8 +17,8 @@
     "prettier": "^3.1.0"
   },
   "dependencies": {
-    "@forge/api": "^2.19.4",
+    "@forge/api": "^5.0.0",
     "@forge/ui": "^1.9.9",
-    "@forge/ui-jira": "^11.0.16"
+    "@forge/ui-jira": "^13.0.19"
   }
 }
