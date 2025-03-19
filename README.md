@@ -17,7 +17,7 @@ instructions but diverge for reproducability and portability reasons.
 
 ### Before you begin
 
-Forge CLI requires [Docker](https://docs.docker.com/get-docker/) and Node.js 20 (LTS) to be installed:
+Forge CLI requires [Docker](https://docs.docker.com/get-docker/) and Node.js 22 (LTS) to be installed:
 
 - [Apple macOS](https://developer.atlassian.com/platform/forge/installing-forge-on-macos)
 - [Linux](https://developer.atlassian.com/platform/forge/installing-forge-on-linux)
@@ -31,10 +31,15 @@ commands:
 ### Install the Forge CLI
 
 Forge instructions start by
-[installing the CLI globally](https://developer.atlassian.com/platform/forge/getting-started/#install-the-forge-cli) but
-instead we will use a local installation with pinned requirements:
+[installing the CLI globally](https://developer.atlassian.com/platform/forge/getting-started/#install-the-forge-cli)
+but you can install it locally if you prefer:
 
-    npm i @forge/cli -g
+    # install the CLI globally...
+    npm i @forge/cli@11 -g
+    # then install local dependencies
+    npm ci
+    # ...or install the CLI locally
+    npm i @forge/cli@11 --no-save
 
 The Forge CLI is then available by typing `npx forge`.
 
