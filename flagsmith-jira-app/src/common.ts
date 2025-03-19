@@ -27,8 +27,8 @@ export type ErrorPayload = { error: Error };
 /** Use a promise safely i.e. ignore result if subsequently unmounted */
 export const usePromise = <T>(
   promise: () => Promise<T>,
-  deps: any[],
-  setError?: (error: Error) => void
+  deps: unknown[],
+  setError?: (error: Error) => void,
 ): [T | undefined, (value: T | undefined) => void] => {
   const [result, setResult] = useState<T | undefined>();
   useEffect(() => {

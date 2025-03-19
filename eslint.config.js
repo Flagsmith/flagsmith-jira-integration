@@ -1,31 +1,29 @@
-{
-  "parserOptions": {
-    "sourceType": "module",
-    "ecmaVersion": 2017,
-    "ecmaFeatures": {
-      "jsx": true
-    }
+export default {
+  parserOptions: {
+    sourceType: "module",
+    ecmaVersion: 2017,
+    ecmaFeatures: {
+      jsx: true,
+    },
   },
-  "plugins": [
-    "react-hooks"
-  ],
-  "extends": [
+  plugins: ["react-hooks"],
+  extends: [
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:react/jsx-runtime",
     "plugin:@typescript-eslint/recommended",
-    "plugin:prettier/recommended"
+    "plugin:prettier/recommended",
   ],
-  "rules": {
+  rules: {
     "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-unused-vars": "warn",
     "prettier/prettier": "warn",
     "react-hooks/rules-of-hooks": "error",
-    "react/display-name": "off"
+    "react/display-name": "off",
   },
-  "settings": {
-    "react": {
-      "version": "18"
-    }
-  }
-}
+  settings: {
+    react: {
+      version: "18",
+    },
+  },
+};
