@@ -1,35 +1,50 @@
 app:
   id: ari:cloud:ecosystem::app/9ea1f892-1356-44bd-9ac8-684abf3a5714
+  runtime:
+    name: nodejs22.x
 modules:
+  # TODO later: consider adding a useAsGetStarted adminPage
   jira:adminPage:
     - key: app-settings
-      function: fn-app-settings
       title: Configure Flagsmith for Jira
       icon: resource:static;logo.svg
+      render: native
+      resource: app-settings
+      resolver:
+        function: resolver
       useAsConfig: true
   jira:projectSettingsPage:
     - key: project-settings
-      function: fn-project-settings
       title: Connect Flagsmith project
       icon: resource:static;logo.svg
+      render: native
+      resource: project-settings
+      resolver:
+        function: resolver
   jira:issuePanel:
-    - key: issue-view-flag
-      function: fn-issue-view-flag
+    - key: issue-features
       title: Linked feature flags
       icon: resource:static;logo.svg
+      render: native
+      resource: issue-features
+      resolver:
+        function: resolver
   function:
-    - key: fn-app-settings
-      handler: index.runAppSettingsPage
-    - key: fn-project-settings
-      handler: index.runProjectSettingsPage
-    - key: fn-issue-view-flag
-      handler: index.runIssueFlagPanel
+    - key: resolver
+      handler: index.handler
 resources:
   - key: static
     path: static
+  - key: app-settings
+    path: src/frontend/app-settings.tsx
+  - key: project-settings
+    path: src/frontend/project-settings.tsx
+  - key: issue-features
+    path: src/frontend/issue-features.tsx
 permissions:
   scopes:
     - storage:app
+    - read:permission:jira
     - read:project.property:jira
     - write:project.property:jira
     - delete:project.property:jira

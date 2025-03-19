@@ -38,15 +38,15 @@ created in a developer account.
 
 ### Source Code
 
-The three entry points to the app are contained in the `src/index.jsx` file. These define React components for App
-Settings, Project Settings and Issue Panel.
+The three frontend entry points to the app are contained in the `src/frontend` folder. These define React components for App
+Settings, Project Settings and Issue Panel. The resolver entry point for backend functions is in `src/index.ts`.
 
 ### Linting and Formatting
 
 The Atlassian template provided some basic eslint config, to which sensible TypeScript/React/Prettier defaults have been
 added.
 
-Execute `npm run eslint` to check linting and formatting.
+Execute `npm run lint` to check linting and formatting.
 
 ### Deployment and Installation
 

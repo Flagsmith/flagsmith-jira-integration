@@ -1,39 +1,10 @@
 import api, { APIResponse, Route, assumeTrustedRoute, route } from "@forge/api";
 
-import { ApiArgs, ApiError } from "./common";
+import { ApiArgs, ApiError, FLAGSMITH_API_V1 } from "../common";
 
 type Model = {
   id: number;
   name: string;
-};
-
-export type OrganisationModel = Model;
-export type ProjectModel = Model;
-
-export type EnvironmentModel = Model & { api_key: string };
-
-export type FeatureModel = Model & {
-  id: number | string;
-  description: string;
-  archived_at: string | null;
-  created_date: string;
-};
-
-export type FeatureState = {
-  [key: string]: FlagModel;
-};
-
-export type FeatureStateValue = {
-  string_value: string | null;
-  boolean_value: boolean | null;
-  integer_value: number | null;
-};
-
-export type FlagModel = {
-  name: string;
-  feature_id: string | number;
-  description: string | null;
-  environments: EnvironmentFeatureState[];
 };
 
 type PaginatedModels<TModel extends Model> = {
@@ -43,7 +14,18 @@ type PaginatedModels<TModel extends Model> = {
   results: TModel[];
 };
 
-export type EnvironmentFeatureState = {
+export type Organisation = Model;
+export type Project = Model;
+export type Environment = Model & { api_key: string };
+
+export type Feature = Model & {
+  id: number | string;
+  description: string;
+  archived_at: string | null;
+  created_date: string;
+};
+
+export type EnvironmentFeatureState = Model & {
   id: number;
   feature_state_value: string | null;
   multivariate_feature_state_values: {
@@ -68,14 +50,10 @@ export type EnvironmentFeatureState = {
   api_key: string;
 };
 
-// TODO later: these could be set from environment variables for self-hosted users
-const FLAGSMITH_API_V1 = "https://api.flagsmith.com/api/v1";
-export const FLAGSMITH_APP = "https://app.flagsmith.com";
-
 const flagsmithApi = async (
   apiKey: string,
   route: Route,
-  { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {},
+  { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {}
 ): Promise<unknown> => {
   try {
     const url = `${FLAGSMITH_API_V1}${route.value}`;
@@ -84,11 +62,11 @@ const flagsmithApi = async (
       method,
       headers: {
         Accept: "application/json",
-        // TODO change to Api-Key ${apiKey} (for RBAC tokens) before official release
+        // TODO later: change to Api-Key ${apiKey} to use RBAC tokens
         Authorization: `Token ${apiKey}`,
         ...headers,
       },
-      body,
+      ...(body ? { body } : {}),
     });
     checkResponse(response, ...codes);
     const data = await (jsonResponse ? response.json() : response.text());
@@ -96,7 +74,6 @@ const flagsmithApi = async (
     return data;
   } catch (error) {
     console.error(error);
-    if (!(error instanceof Error)) throw error;
     // rethrow expected errors
     if (error instanceof ApiError) throw error;
     // @ts-expect-error error.code may not exist
@@ -113,7 +90,7 @@ const checkResponse = (response: APIResponse, ...codes: number[]): void => {
 
 const unpaginate = async <TModel extends Model>(
   apiKey: string,
-  data: PaginatedModels<TModel>,
+  data: PaginatedModels<TModel>
 ): Promise<TModel[]> => {
   let pageData = data;
   const results = pageData?.results ?? [];
@@ -129,83 +106,86 @@ const checkApiKey = (apiKey: string): void => {
   if (!apiKey) throw new ApiError("Flagsmith API Key not configured", 400);
 };
 
-export const fetchOrganisations = async ({
-  apiKey,
-}: {
-  apiKey: string;
-}): Promise<OrganisationModel[]> => {
+export type ReadOrganisations = (args: { apiKey: string }) => Promise<Organisation[]>;
+
+/** Read Flagsmith Organisations for given API Key */
+export const readOrganisations: ReadOrganisations = async ({ apiKey }) => {
   checkApiKey(apiKey);
   const path = route`/organisations/`;
-  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<OrganisationModel>;
+  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Organisation>;
   const results = await unpaginate(apiKey, data);
   if (results.length === 0) throw new ApiError("Flagsmith user has no organisations", 404);
   return results;
 };
 
-export const fetchProjects = async ({
-  apiKey,
-  organisationId,
-}: {
+export type ReadProjects = (args: {
   apiKey: string;
   organisationId: string | undefined;
-}): Promise<ProjectModel[]> => {
+}) => Promise<Project[]>;
+
+/** Read Flagsmith Projects for given API Key and Organisation ID */
+export const readProjects: ReadProjects = async ({ apiKey, organisationId }) => {
   checkApiKey(apiKey);
   if (!organisationId) throw new ApiError("Flagsmith organisation not configured", 400);
   const path = route`/projects/?organisation=${organisationId}`;
-  const data = (await flagsmithApi(apiKey, path)) as ProjectModel[];
+  const data = (await flagsmithApi(apiKey, path)) as Project[];
   // do not unpaginate as this API does not do pagination
   const results = data ?? [];
   if (results.length === 0) throw new ApiError("Flagsmith organisation has no projects", 404);
   return results;
 };
 
-export const fetchEnvironments = async ({
-  apiKey,
-  projectId,
-}: {
+export type ReadEnvironments = (args: {
   apiKey: string;
   projectId: string | undefined;
-}): Promise<EnvironmentModel[]> => {
+}) => Promise<Environment[]>;
+
+/** Read Flagsmith Environments for given API Key and Project ID */
+export const readEnvironments: ReadEnvironments = async ({ apiKey, projectId }) => {
   checkApiKey(apiKey);
   if (!projectId) throw new ApiError("Flagsmith project not configured", 400);
   const path = route`/environments/?project=${projectId}`;
-  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<EnvironmentModel>;
+  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Environment>;
   const results = await unpaginate(apiKey, data);
   if (results.length === 0) throw new ApiError("Flagsmith project has no environments", 404);
   return results;
 };
 
-export const fetchFeatures = async ({
-  apiKey,
-  projectId,
-}: {
+export type ReadFeatures = (args: {
   apiKey: string;
   projectId: string | undefined;
-}): Promise<FeatureModel[]> => {
+}) => Promise<Feature[]>;
+
+/** Read Flagsmith Features for given API Key and Project ID */
+export const readFeatures: ReadFeatures = async ({ apiKey, projectId }) => {
   checkApiKey(apiKey);
   if (!projectId) throw new ApiError("Flagsmith project not configured", 400);
   const path = route`/projects/${projectId}/features/`;
-  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<FeatureModel>;
-  const results = await unpaginate(apiKey, data);
+  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Feature>;
+  // ignore archived features
+  const results = (await unpaginate(apiKey, data)).filter((each) => !each.archived_at);
   if (results.length === 0) throw new ApiError("Flagsmith project has no features", 404);
   return results;
 };
 
-export const fetchFeatureState = async ({
-  apiKey,
-  featureName,
-  envAPIKey,
-}: {
+export type ReadEnvironmentFeatureState = (args: {
   apiKey: string;
+  envApiKey: string;
   featureName: string;
-  envAPIKey: string;
-}): Promise<EnvironmentFeatureState> => {
+}) => Promise<EnvironmentFeatureState>;
+
+/** Read Flagsmith Feature State for given API Key, Environment API Key and Feature Name */
+export const readEnvironmentFeatureState: ReadEnvironmentFeatureState = async ({
+  apiKey,
+  envApiKey,
+  featureName,
+}) => {
   checkApiKey(apiKey);
-  if (!envAPIKey) throw new ApiError("Flagsmith environment not configured", 400);
-  const path = route`/environments/${envAPIKey}/featurestates/?feature_name=${featureName}`;
+  if (!envApiKey) throw new ApiError("Flagsmith environment not configured", 400);
+  const path = route`/environments/${envApiKey}/featurestates/?feature_name=${featureName}`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<EnvironmentFeatureState>;
   const results = await unpaginate(apiKey, data);
-  if (!results || results.length === 0) {
+  if (results.length === 0) {
     throw new ApiError("Flagsmith project has no features", 404);
   } else {
     return results[0] as EnvironmentFeatureState;
