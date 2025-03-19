@@ -47,7 +47,7 @@ const ErrorWrapper: React.FC<ErrorWrapperProps> = ({
       <SectionMessage title={error.message ?? "Something went wrong"} appearance={appearance}>
         <Text>{advice}</Text>
       </SectionMessage>
-      <Box xcss={{ marginTop: "space.300" }}>
+      <Box xcss={{ marginTop: "space.200" }}>
         <Stack alignInline="end">
           <ButtonGroup label="Actions">
             <Button onClick={() => setError(undefined)}>Retry</Button>

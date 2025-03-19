@@ -5,15 +5,12 @@ import { ApiError, FLAGSMITH_APP, usePromise } from "../../common";
 import { canEditIssue } from "../auth";
 import { readEnvironments, readFeatures } from "../flagsmith";
 import { readFeatureIds, readProjectId, writeFeatureIds } from "../jira";
-import { readApiKey } from "../storage";
+
 import { WrappableComponentProps } from "./ErrorWrapper";
 import IssueFeaturesForm from "./IssueFeaturesForm";
 import IssueFeatureTables from "./IssueFeatureTables";
 
 const IssueFeaturesPanel: React.FC<WrappableComponentProps> = ({ setError }) => {
-  // get configuration from storage
-  const [apiKey] = usePromise(readApiKey, [], setError);
-
   // get project context extension
   const context = useProductContext();
   const extension = context?.extension;
@@ -27,7 +24,7 @@ const IssueFeaturesPanel: React.FC<WrappableComponentProps> = ({ setError }) => 
       return undefined;
     },
     [extension],
-    setError
+    setError,
   );
 
   // get Flagsmith features IDs from Jira issue
@@ -39,7 +36,7 @@ const IssueFeaturesPanel: React.FC<WrappableComponentProps> = ({ setError }) => 
       return undefined;
     },
     [extension],
-    setError
+    setError,
   );
 
   // get Jira permissions
@@ -51,7 +48,7 @@ const IssueFeaturesPanel: React.FC<WrappableComponentProps> = ({ setError }) => 
       return false;
     },
     [extension],
-    setError
+    setError,
   );
 
   // set initial editing state
@@ -66,8 +63,8 @@ const IssueFeaturesPanel: React.FC<WrappableComponentProps> = ({ setError }) => 
   const [environments] = usePromise(
     async () => {
       try {
-        if (apiKey && projectId) {
-          return await readEnvironments({ apiKey, projectId });
+        if (projectId !== undefined) {
+          return await readEnvironments({ projectId });
         } else {
           return undefined;
         }
@@ -82,16 +79,16 @@ const IssueFeaturesPanel: React.FC<WrappableComponentProps> = ({ setError }) => 
         return [];
       }
     },
-    [apiKey, projectId],
-    setError
+    [projectId],
+    setError,
   );
 
   // get features from Flagsmith API
   const [features] = usePromise(
     async () => {
       try {
-        if (apiKey && projectId) {
-          return await readFeatures({ apiKey, projectId });
+        if (projectId !== undefined) {
+          return await readFeatures({ projectId });
         } else {
           return undefined;
         }
@@ -106,22 +103,21 @@ const IssueFeaturesPanel: React.FC<WrappableComponentProps> = ({ setError }) => 
         return [];
       }
     },
-    [apiKey, projectId],
-    setError
+    [projectId],
+    setError,
   );
 
-  /** Optimistic update form state and write Feature IDs to Jira issue */
+  /** Write Feature IDs to Jira issue and update form state */
   const saveIssueFeatureIds = async (featureIds: string[]) => {
     if (extension) {
-      setFeatureIds(featureIds);
       await writeFeatureIds(extension, featureIds);
+      setFeatureIds(featureIds);
     }
   };
 
   const projectUrl = `${FLAGSMITH_APP}/project/${projectId}`;
 
   const ready =
-    apiKey !== undefined &&
     extension !== undefined &&
     projectId !== undefined &&
     featureIds !== undefined &&
@@ -142,7 +138,6 @@ const IssueFeaturesPanel: React.FC<WrappableComponentProps> = ({ setError }) => 
       )}
       <IssueFeatureTables
         projectUrl={projectUrl}
-        apiKey={apiKey}
         environments={environments}
         features={features}
         issueFeatureIds={featureIds}

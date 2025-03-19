@@ -19,13 +19,12 @@ import {
 import React, { Fragment, useEffect, useId, useMemo, useState } from "react";
 
 import { ApiError, usePromise } from "../../common";
-import { readProjects } from "../flagsmith";
+import { readFeatures, readProjects } from "../flagsmith";
 import { readProjectId, writeProjectId } from "../jira";
-import { readApiKey, readOrganisationId } from "../storage";
+import { readOrganisationId } from "../storage";
 import { WrappableComponentProps } from "./ErrorWrapper";
 
 type ProjectSettingsFormProps = WrappableComponentProps & {
-  apiKey: string;
   organisationId: string;
   projectId: string;
   saveProjectId: (projectId: string) => Promise<void>;
@@ -33,7 +32,7 @@ type ProjectSettingsFormProps = WrappableComponentProps & {
 
 const ProjectSettingsForm = ({
   setError,
-  apiKey,
+
   organisationId,
   saveProjectId,
   ...props
@@ -48,7 +47,7 @@ const ProjectSettingsForm = ({
   const [projects] = usePromise(
     async () => {
       try {
-        return await readProjects({ apiKey, organisationId });
+        return await readProjects({ organisationId });
       } catch (error) {
         // ignore 404 (no projects) as that is handled by the form
         if (
@@ -60,9 +59,10 @@ const ProjectSettingsForm = ({
         return [];
       }
     },
-    [apiKey, organisationId],
-    setError
+    [organisationId],
+    setError,
   );
+
   const project = projects?.find((each) => String(each.id) === String(projectId));
   const currentProject = projects?.find((each) => String(each.id) === String(props.projectId));
 
@@ -81,9 +81,24 @@ const ProjectSettingsForm = ({
         label: model.name,
         value: String(model.id),
       })),
-    [projects]
+    [projects],
   );
   const projectValue = projectOptions?.find((option) => option.value === projectId) ?? null;
+
+  // get features for current project from Flagsmith API
+  const [features] = usePromise(async () => {
+    try {
+      if (props.projectId) {
+        return await readFeatures({ projectId: props.projectId });
+      } else {
+        return undefined;
+      }
+    } catch (error) {
+      // treat errors as "no features"
+      console.error(error);
+      return [];
+    }
+  }, [props.projectId]);
 
   if (projects === undefined) {
     return <Spinner label="Loading projects" />;
@@ -100,19 +115,22 @@ const ProjectSettingsForm = ({
     setProjectId("");
   };
 
-  const configured = !!apiKey && !!organisationId;
-  const connected = configured && !!currentProject;
+  const configured = !!organisationId;
+  const connected = configured && !!currentProject && features && features.length > 0;
 
   return (
     <Fragment>
       <Box xcss={{ marginBottom: "space.300" }}>
         <Inline space="space.050" alignBlock="center">
           <Strong>Project:</Strong> {!!currentProject && <Text>{currentProject.name}</Text>}
+          {configured && !currentProject && projects && projects.length > 0 && !connected && (
+            <Lozenge appearance="moved">Not connected</Lozenge>
+          )}
           {configured && projects && projects.length === 0 && (
             <Lozenge appearance="removed">No projects to connect</Lozenge>
           )}
-          {configured && projects && projects.length > 0 && !connected && (
-            <Lozenge appearance="moved">Not connected</Lozenge>
+          {configured && !!currentProject && !!features && !connected && (
+            <Lozenge appearance="removed">No features to connect</Lozenge>
           )}
           {connected && <Lozenge appearance="success">Connected</Lozenge>}
         </Inline>
@@ -149,7 +167,6 @@ const ProjectSettingsForm = ({
 
 const ProjectSettingsPage: React.FC<WrappableComponentProps> = ({ setError }) => {
   // get configuration from storage
-  const [apiKey] = usePromise(readApiKey, [], setError);
   const [organisationId] = usePromise(readOrganisationId, [], setError);
   // get project context extension
   const context = useProductContext();
@@ -163,7 +180,7 @@ const ProjectSettingsPage: React.FC<WrappableComponentProps> = ({ setError }) =>
       return undefined;
     },
     [extension],
-    setError
+    setError,
   );
 
   /** Write Project ID to Jira project and update form state */
@@ -174,16 +191,11 @@ const ProjectSettingsPage: React.FC<WrappableComponentProps> = ({ setError }) =>
     }
   };
 
-  const ready =
-    apiKey !== undefined &&
-    organisationId !== undefined &&
-    extension !== undefined &&
-    projectId !== undefined;
+  const ready = organisationId !== undefined && extension !== undefined && projectId !== undefined;
 
   return ready ? (
     <ProjectSettingsForm
       setError={setError}
-      apiKey={apiKey}
       organisationId={organisationId}
       projectId={projectId}
       saveProjectId={saveProjectId}

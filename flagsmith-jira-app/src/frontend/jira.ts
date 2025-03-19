@@ -8,7 +8,7 @@ export type EntityType = "project" | "issue";
 
 const jiraApi = async (
   restPath: string,
-  { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {}
+  { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {},
 ): Promise<unknown> => {
   try {
     // if (process.env.DEBUG) console.debug(method, restPath);
@@ -36,14 +36,14 @@ const jiraApi = async (
 const checkResponse = (response: APIResponse, ...codes: number[]): void => {
   if (!response.ok && !codes.includes(response.status)) {
     console.warn(response.status, response.statusText);
-    throw new ApiError("Unexpected Jira API response:", response.status);
+    throw new ApiError(`Unexpected Jira API response: ${response.statusText}`, response.status);
   }
 };
 
 const getEntityProperty = async <T>(
   entityType: EntityType,
   entityId: string,
-  propertyKey: string
+  propertyKey: string,
 ): Promise<T | undefined> => {
   const data = (await jiraApi(`/rest/api/3/${entityType}/${entityId}/properties/${propertyKey}`, {
     codes: [404],
@@ -55,7 +55,7 @@ const setEntityProperty = async <T>(
   entityType: EntityType,
   entityId: string,
   propertyKey: string,
-  value: T
+  value: T,
 ): Promise<void> => {
   await jiraApi(`/rest/api/3/${entityType}/${entityId}/properties/${propertyKey}`, {
     method: "PUT",
@@ -70,7 +70,7 @@ const setEntityProperty = async <T>(
 const deleteEntityProperty = async (
   entityType: EntityType,
   entityId: string,
-  propertyKey: string
+  propertyKey: string,
 ): Promise<void> => {
   await jiraApi(`/rest/api/3/${entityType}/${entityId}/properties/${propertyKey}`, {
     method: "DELETE",
@@ -92,7 +92,7 @@ export const readProjectId = async (extension: ExtensionData): Promise<string> =
 /** Write Flagsmith Project ID stored on Jira Project */
 export const writeProjectId = async (
   extension: ExtensionData,
-  projectId: string
+  projectId: string,
 ): Promise<void> => {
   const entityType = "project";
   const entityId = String(extension[entityType].id);
@@ -113,7 +113,7 @@ export const readFeatureIds = async (extension: ExtensionData): Promise<string[]
 /** Write Flagsmith Feature IDs stored on Jira Issue */
 export const writeFeatureIds = async (
   extension: ExtensionData,
-  featureIds: string[]
+  featureIds: string[],
 ): Promise<void> => {
   const entityType = "issue";
   const entityId = String(extension[entityType].id);

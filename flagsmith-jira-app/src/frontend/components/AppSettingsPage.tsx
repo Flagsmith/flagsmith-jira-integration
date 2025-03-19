@@ -19,19 +19,22 @@ import {
 import React, { Fragment, useEffect, useId, useMemo, useState } from "react";
 
 import { ApiError, usePromise } from "../../common";
-import { readOrganisations } from "../flagsmith";
+import { readOrganisations, readProjects } from "../flagsmith";
 import {
   deleteApiKey,
   deleteOrganisationId,
-  readApiKey,
+  readHasApiKey,
   readOrganisationId,
   writeApiKey,
   writeOrganisationId,
 } from "../storage";
 import { WrappableComponentProps } from "./ErrorWrapper";
 
+// 40 chars, same length as API key
+const SENTINEL = "****************************************";
+
 type AppSettingsFormProps = WrappableComponentProps & {
-  apiKey: string | null;
+  hasApiKey: boolean;
   saveApiKey: (apiKey: string) => Promise<void>;
   organisationId: string | null;
   saveOrganisationId: (organisationId: string) => Promise<void>;
@@ -44,10 +47,10 @@ const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
   ...props
 }) => {
   // set form state from props
-  const [apiKey, setApiKey] = useState<string | null>(props.apiKey);
+  const [apiKey, setApiKey] = useState<string | null>(props.hasApiKey ? SENTINEL : null);
   useEffect(() => {
-    setApiKey(props.apiKey);
-  }, [props.apiKey]);
+    setApiKey(props.hasApiKey ? SENTINEL : null);
+  }, [props.hasApiKey]);
 
   const [organisationId, setOrganisationId] = useState<string | null>(props.organisationId);
   useEffect(() => {
@@ -59,7 +62,8 @@ const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
     async () => {
       try {
         if (apiKey && apiKey.length === 40) {
-          return await readOrganisations({ apiKey });
+          // use stored API key if current value is sentinel i.e. unchanged
+          return await readOrganisations(apiKey === SENTINEL ? {} : { apiKey });
         }
       } catch (error) {
         // ignore 401 (invalid API key) and 404 (no organisations) as that is handled by the form
@@ -74,11 +78,12 @@ const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
       return [];
     },
     [apiKey],
-    setError
+    setError,
   );
+
   const organisation = organisations?.find((each) => String(each.id) === String(organisationId));
   const currentOrganisation = organisations?.find(
-    (each) => String(each.id) === String(props.organisationId)
+    (each) => String(each.id) === String(props.organisationId),
   );
 
   // update organisationId when organisations change
@@ -95,6 +100,21 @@ const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
     }
   }, [organisations, organisation]);
 
+  // get projects for current organisation from Flagsmith API
+  const [projects] = usePromise(async () => {
+    try {
+      if (props.organisationId) {
+        return await readProjects({ organisationId: props.organisationId });
+      } else {
+        return undefined;
+      }
+    } catch (error) {
+      // treat errors as "no projects"
+      console.error(error);
+      return [];
+    }
+  }, [props.organisationId]);
+
   const apiKeyInputId = useId();
 
   const organisationInputId = useId();
@@ -104,7 +124,7 @@ const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
         label: each.name,
         value: String(each.id),
       })),
-    [organisations]
+    [organisations],
   );
 
   const organisationValue =
@@ -115,7 +135,7 @@ const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
   }
 
   const onSave = async () => {
-    await saveApiKey(apiKey ?? "");
+    if (apiKey !== SENTINEL) await saveApiKey(apiKey ?? "");
     await saveOrganisationId(organisationId ?? "");
   };
 
@@ -128,8 +148,10 @@ const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
     setOrganisationId("");
   };
 
-  const apiKeyInvalid = props.apiKey?.length === 40 && organisations?.length === 0;
-  const configured = !!props.apiKey && !!currentOrganisation;
+  // this status is a bit confusing as it reflects the current form state
+  // rather than keeping track of whether the saved API key and organisation ID match each other
+  const apiKeyInvalid = props.hasApiKey && organisations?.length === 0;
+  const configured = props.hasApiKey && !!currentOrganisation && projects && projects.length > 0;
 
   return (
     <Fragment>
@@ -137,11 +159,16 @@ const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
         <Inline space="space.050" alignBlock="center">
           <Strong>Organisation:</Strong>{" "}
           {!!currentOrganisation && <Text>{currentOrganisation.name}</Text>}
-          {!configured && !apiKeyInvalid && <Lozenge appearance="moved">Not connected</Lozenge>}
+          {!apiKeyInvalid && !currentOrganisation && (
+            <Lozenge appearance="moved">Not connected</Lozenge>
+          )}
           {apiKeyInvalid && (
             <Lozenge appearance="removed" maxWidth={"15rem"}>
               Invalid key or no organisations
             </Lozenge>
+          )}
+          {!apiKeyInvalid && !!currentOrganisation && !!projects && !configured && (
+            <Lozenge appearance="removed">No projects to connect</Lozenge>
           )}
           {configured && <Lozenge appearance="success">Connected</Lozenge>}
         </Inline>
@@ -194,7 +221,13 @@ const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
 
 const AppSettingsPage: React.FC<WrappableComponentProps> = ({ setError }) => {
   // get configuration from storage
-  const [apiKey, setApiKey] = usePromise(readApiKey, [], setError);
+  const [hasApiKey, setHasApiKey] = usePromise(
+    async () => {
+      return await readHasApiKey();
+    },
+    [],
+    setError,
+  );
   const [organisationId, setOrganisationId] = usePromise(readOrganisationId, [], setError);
 
   /** Write API Key to storage and update form state */
@@ -204,7 +237,7 @@ const AppSettingsPage: React.FC<WrappableComponentProps> = ({ setError }) => {
     } else {
       await deleteApiKey();
     }
-    setApiKey(apiKey);
+    setHasApiKey(!!apiKey);
   };
 
   /** Write Organisation ID to storage and update form state */
@@ -217,12 +250,12 @@ const AppSettingsPage: React.FC<WrappableComponentProps> = ({ setError }) => {
     setOrganisationId(organisationId);
   };
 
-  const ready = apiKey !== undefined && organisationId !== undefined;
+  const ready = hasApiKey !== undefined && organisationId !== undefined;
 
   return ready ? (
     <AppSettingsForm
       setError={setError}
-      apiKey={apiKey}
+      hasApiKey={hasApiKey}
       saveApiKey={saveApiKey}
       organisationId={organisationId}
       saveOrganisationId={saveOrganisationId}

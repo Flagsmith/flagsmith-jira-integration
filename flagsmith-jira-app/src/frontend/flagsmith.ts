@@ -14,25 +14,24 @@ export {
   Project,
 } from "../backend/flagsmith";
 
-/** Read Flagsmith Organisations for given API Key */
+/** Read Flagsmith Organisations for stored/given API Key */
 export const readOrganisations: ReadOrganisations = async ({ apiKey }) =>
   customInvoke("readOrganisations", { apiKey });
 
-/** Read Flagsmith Projects for given API Key and Organisation ID */
-export const readProjects: ReadProjects = async ({ apiKey, organisationId }) =>
-  customInvoke("readProjects", { apiKey, organisationId });
+/** Read Flagsmith Projects for stored API Key and given Organisation ID */
+export const readProjects: ReadProjects = async ({ organisationId }) =>
+  customInvoke("readProjects", { organisationId });
 
-/** Read Flagsmith Environments for given API Key and Project ID */
-export const readEnvironments: ReadEnvironments = async ({ apiKey, projectId }) =>
-  customInvoke("readEnvironments", { apiKey, projectId });
+/** Read Flagsmith Environments for stored API Key and given Project ID */
+export const readEnvironments: ReadEnvironments = async ({ projectId }) =>
+  customInvoke("readEnvironments", { projectId });
 
-/** Read Flagsmith Features for given API Key and Project ID */
-export const readFeatures: ReadFeatures = async ({ apiKey, projectId }) =>
-  customInvoke("readFeatures", { apiKey, projectId });
+/** Read Flagsmith Features for stored API Key and given Project ID */
+export const readFeatures: ReadFeatures = async ({ projectId }) =>
+  customInvoke("readFeatures", { projectId });
 
-/** Read Flagsmith Feature State for given API Key, Environment API Key and Feature Name */
+/** Read Flagsmith Feature State for stored API Key and given Environment API Key and Feature Name */
 export const readEnvironmentFeatureState: ReadEnvironmentFeatureState = async ({
-  apiKey,
   envApiKey,
   featureName,
-}) => customInvoke("readEnvironmentFeatureState", { apiKey, envApiKey, featureName });
+}) => customInvoke("readEnvironmentFeatureState", { envApiKey, featureName });

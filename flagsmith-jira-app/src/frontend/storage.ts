@@ -1,15 +1,14 @@
 import type {
   DeleteApiKey,
   DeleteOrganisationId,
-  ReadApiKey,
   ReadOrganisationId,
   WriteApiKey,
   WriteOrganisationId,
 } from "../backend/storage";
 import { customInvoke } from "./invoke";
 
-/** Read Flagsmith API Key stored on Jira app */
-export const readApiKey: ReadApiKey = async () => customInvoke("readApiKey");
+/** Check existence of Flagsmith API Key stored on Jira app */
+export const readHasApiKey = async () => customInvoke<boolean>("readHasApiKey");
 /** Read Flagsmith Organisation ID stored on Jira app */
 export const readOrganisationId: ReadOrganisationId = async () =>
   customInvoke("readOrganisationId");

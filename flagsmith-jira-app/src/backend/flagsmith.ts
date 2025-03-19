@@ -1,6 +1,7 @@
 import api, { APIResponse, Route, assumeTrustedRoute, route } from "@forge/api";
 
 import { ApiArgs, ApiError, FLAGSMITH_API_V1 } from "../common";
+import { readApiKey } from "./storage";
 
 type Model = {
   id: number;
@@ -53,7 +54,7 @@ export type EnvironmentFeatureState = Model & {
 const flagsmithApi = async (
   apiKey: string,
   route: Route,
-  { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {}
+  { method = "GET", headers, body, codes = [], jsonResponse = true }: ApiArgs = {},
 ): Promise<unknown> => {
   try {
     const url = `${FLAGSMITH_API_V1}${route.value}`;
@@ -84,13 +85,16 @@ const flagsmithApi = async (
 const checkResponse = (response: APIResponse, ...codes: number[]): void => {
   if (!response.ok && !codes.includes(response.status)) {
     console.warn(response.status, response.statusText);
-    throw new ApiError("Unexpected Flagsmith API response:", response.status);
+    throw new ApiError(
+      `Unexpected Flagsmith API response: ${response.statusText}`,
+      response.status,
+    );
   }
 };
 
 const unpaginate = async <TModel extends Model>(
   apiKey: string,
-  data: PaginatedModels<TModel>
+  data: PaginatedModels<TModel>,
 ): Promise<TModel[]> => {
   let pageData = data;
   const results = pageData?.results ?? [];
@@ -103,13 +107,14 @@ const unpaginate = async <TModel extends Model>(
 };
 
 const checkApiKey = (apiKey: string): void => {
-  if (!apiKey) throw new ApiError("Flagsmith API Key not configured", 400);
+  if (!apiKey) throw new ApiError("Flagsmith API Key not set", 400);
 };
 
-export type ReadOrganisations = (args: { apiKey: string }) => Promise<Organisation[]>;
+export type ReadOrganisations = (args: { apiKey?: string }) => Promise<Organisation[]>;
 
-/** Read Flagsmith Organisations for given API Key */
-export const readOrganisations: ReadOrganisations = async ({ apiKey }) => {
+/** Read Flagsmith Organisations for stored/given API Key */
+export const readOrganisations: ReadOrganisations = async ({ apiKey: givenApiKey }) => {
+  const apiKey = givenApiKey ?? (await readApiKey());
   checkApiKey(apiKey);
   const path = route`/organisations/`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Organisation>;
@@ -118,15 +123,13 @@ export const readOrganisations: ReadOrganisations = async ({ apiKey }) => {
   return results;
 };
 
-export type ReadProjects = (args: {
-  apiKey: string;
-  organisationId: string | undefined;
-}) => Promise<Project[]>;
+export type ReadProjects = (args: { organisationId: string | undefined }) => Promise<Project[]>;
 
-/** Read Flagsmith Projects for given API Key and Organisation ID */
-export const readProjects: ReadProjects = async ({ apiKey, organisationId }) => {
+/** Read Flagsmith Projects for stored API Key and given Organisation ID */
+export const readProjects: ReadProjects = async ({ organisationId }) => {
+  const apiKey = await readApiKey();
   checkApiKey(apiKey);
-  if (!organisationId) throw new ApiError("Flagsmith organisation not configured", 400);
+  if (!organisationId) throw new ApiError("Flagsmith organisation not connected", 400);
   const path = route`/projects/?organisation=${organisationId}`;
   const data = (await flagsmithApi(apiKey, path)) as Project[];
   // do not unpaginate as this API does not do pagination
@@ -135,15 +138,13 @@ export const readProjects: ReadProjects = async ({ apiKey, organisationId }) => 
   return results;
 };
 
-export type ReadEnvironments = (args: {
-  apiKey: string;
-  projectId: string | undefined;
-}) => Promise<Environment[]>;
+export type ReadEnvironments = (args: { projectId: string | undefined }) => Promise<Environment[]>;
 
-/** Read Flagsmith Environments for given API Key and Project ID */
-export const readEnvironments: ReadEnvironments = async ({ apiKey, projectId }) => {
+/** Read Flagsmith Environments for stored API Key and given Project ID */
+export const readEnvironments: ReadEnvironments = async ({ projectId }) => {
+  const apiKey = await readApiKey();
   checkApiKey(apiKey);
-  if (!projectId) throw new ApiError("Flagsmith project not configured", 400);
+  if (!projectId) throw new ApiError("Flagsmith project not connected", 400);
   const path = route`/environments/?project=${projectId}`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Environment>;
   const results = await unpaginate(apiKey, data);
@@ -151,15 +152,13 @@ export const readEnvironments: ReadEnvironments = async ({ apiKey, projectId }) 
   return results;
 };
 
-export type ReadFeatures = (args: {
-  apiKey: string;
-  projectId: string | undefined;
-}) => Promise<Feature[]>;
+export type ReadFeatures = (args: { projectId: string | undefined }) => Promise<Feature[]>;
 
-/** Read Flagsmith Features for given API Key and Project ID */
-export const readFeatures: ReadFeatures = async ({ apiKey, projectId }) => {
+/** Read Flagsmith Features for stored API Key and given Project ID */
+export const readFeatures: ReadFeatures = async ({ projectId }) => {
+  const apiKey = await readApiKey();
   checkApiKey(apiKey);
-  if (!projectId) throw new ApiError("Flagsmith project not configured", 400);
+  if (!projectId) throw new ApiError("Flagsmith project not connected", 400);
   const path = route`/projects/${projectId}/features/`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Feature>;
   // ignore archived features
@@ -169,19 +168,18 @@ export const readFeatures: ReadFeatures = async ({ apiKey, projectId }) => {
 };
 
 export type ReadEnvironmentFeatureState = (args: {
-  apiKey: string;
   envApiKey: string;
   featureName: string;
 }) => Promise<EnvironmentFeatureState>;
 
-/** Read Flagsmith Feature State for given API Key, Environment API Key and Feature Name */
+/** Read Flagsmith Feature State for stored API Key and given Environment API Key and Feature Name */
 export const readEnvironmentFeatureState: ReadEnvironmentFeatureState = async ({
-  apiKey,
   envApiKey,
   featureName,
 }) => {
+  const apiKey = await readApiKey();
   checkApiKey(apiKey);
-  if (!envApiKey) throw new ApiError("Flagsmith environment not configured", 400);
+  if (!envApiKey) throw new ApiError("Flagsmith environment not connected", 400);
   const path = route`/environments/${envApiKey}/featurestates/?feature_name=${featureName}`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<EnvironmentFeatureState>;
   const results = await unpaginate(apiKey, data);

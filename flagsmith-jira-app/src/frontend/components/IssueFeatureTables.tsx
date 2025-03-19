@@ -54,10 +54,11 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
       // count variations/overrides
       const variations = stateEnvironment.multivariate_feature_state_values.length;
       const segments = state.environments.filter(
-        (each) => String(each.feature) === String(state.feature_id) && each.feature_segment !== null
+        (each) =>
+          String(each.feature) === String(state.feature_id) && each.feature_segment !== null,
       ).length;
       const identities = state.environments.filter(
-        (each) => String(each.feature) === String(state.feature_id) && each.identity !== null
+        (each) => String(each.feature) === String(state.feature_id) && each.identity !== null,
       ).length;
       return {
         key: `${state.feature_id}`,
@@ -123,17 +124,11 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
 
 type IssueFeatureTableProps = {
   projectUrl: string;
-  apiKey: string;
   environments: Environment[];
   feature: Feature;
 };
 
-const IssueFeatureTable = ({
-  projectUrl,
-  apiKey,
-  environments,
-  feature,
-}: IssueFeatureTableProps) => {
+const IssueFeatureTable = ({ projectUrl, environments, feature }: IssueFeatureTableProps) => {
   // catch API errors per table rather than cause whole component to fail
   const [error, setError] = useState<Error>();
 
@@ -144,21 +139,20 @@ const IssueFeatureTable = ({
       environments: await Promise.all(
         environments.map(async (environment) => ({
           ...(await readEnvironmentFeatureState({
-            apiKey,
-            featureName: feature.name,
             envApiKey: String(environment.api_key),
+            featureName: feature.name,
           })),
           name: environment.name,
           api_key: String(environment.api_key),
-        }))
+        })),
       ),
     }),
-    [apiKey, environments, feature]
+    [environments, feature],
   );
   const [state] = usePromise(
     async () => (error === undefined ? readFeatureState() : undefined),
     [error, readFeatureState],
-    setError
+    setError,
   );
 
   if (error !== undefined) {
@@ -183,7 +177,6 @@ const IssueFeatureTable = ({
 
 type IssueFeatureTablesProps = {
   projectUrl: string;
-  apiKey: string;
   environments: Environment[];
   features: Feature[];
   issueFeatureIds: string[];
@@ -191,7 +184,6 @@ type IssueFeatureTablesProps = {
 
 const IssueFeatureTables = ({
   projectUrl,
-  apiKey,
   environments,
   features,
   issueFeatureIds,
@@ -215,7 +207,6 @@ const IssueFeatureTables = ({
             </Text>
             <IssueFeatureTable
               projectUrl={projectUrl}
-              apiKey={apiKey}
               environments={environments}
               feature={feature}
             />
