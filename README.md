@@ -37,7 +37,7 @@ but you can install it locally if you prefer:
     # install the CLI globally...
     npm i @forge/cli@11 -g
     # then install local dependencies
-    npm ci
+    npm ci --include=dev
     # ...or install the CLI locally
     npm i @forge/cli@11 --no-save
 

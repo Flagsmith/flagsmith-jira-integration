@@ -13,5 +13,5 @@
     "noUnusedParameters": true,
     "jsx": "react-jsx"
   },
-  "exclude": ["node_modules", "**/node_modules/*"]
+  "exclude": ["node_modules"]
 }
