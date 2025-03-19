@@ -7,5 +7,5 @@ import ErrorWrapper from "./components/ErrorWrapper";
 ForgeReconciler.render(
   <React.StrictMode>
     <ErrorWrapper renderChild={(setError) => <AppSettingsPage setError={setError} />} />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

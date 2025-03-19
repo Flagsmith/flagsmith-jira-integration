@@ -1,5 +1,5 @@
 import { Spinner, useProductContext } from "@forge/react";
-import React, { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { ApiError, FLAGSMITH_APP, usePromise } from "../../common";
 import { canEditIssue } from "../auth";
@@ -10,7 +10,7 @@ import { WrappableComponentProps } from "./ErrorWrapper";
 import IssueFeaturesForm from "./IssueFeaturesForm";
 import IssueFeatureTables from "./IssueFeatureTables";
 
-const IssueFeaturesPanel: React.FC<WrappableComponentProps> = ({ setError }) => {
+const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element => {
   // get project context extension
   const context = useProductContext();
   const extension = context?.extension;

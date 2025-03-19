@@ -16,7 +16,7 @@ import {
   Text,
   useProductContext,
 } from "@forge/react";
-import React, { Fragment, useEffect, useId, useMemo, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useState } from "react";
 
 import { ApiError, usePromise } from "../../common";
 import { readFeatures, readProjects } from "../flagsmith";
@@ -165,7 +165,7 @@ const ProjectSettingsForm = ({
   );
 };
 
-const ProjectSettingsPage: React.FC<WrappableComponentProps> = ({ setError }) => {
+const ProjectSettingsPage = ({ setError }: WrappableComponentProps): JSX.Element => {
   // get configuration from storage
   const [organisationId] = usePromise(readOrganisationId, [], setError);
   // get project context extension

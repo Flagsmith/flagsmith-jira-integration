@@ -16,10 +16,10 @@ export type ErrorWrapperProps = {
 
 type SectionMessageAppearance = Parameters<typeof SectionMessage>[0]["appearance"];
 
-const ErrorWrapper: React.FC<ErrorWrapperProps> = ({
+const ErrorWrapper = ({
   renderChild,
   checkSettings = "app and project",
-}) => {
+}: ErrorWrapperProps): JSX.Element => {
   const [error, setError] = useState<Error | undefined>(undefined);
 
   // render child if no error

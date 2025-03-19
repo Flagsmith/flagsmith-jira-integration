@@ -30,7 +30,7 @@ Chosen option: "UI Kit 2", because it offers the least worst route to upgrading 
 
 - Reduced effort compared to Custom UI as UI Kit 2 provides pre-built UI components, similar to those currently used, styled to fit with Jira
 - Greater compatibility as UI Kit 2 is expected to work well with Jira styling features such as dark mode, while providing finer style control than UI Kit 1
-- UI Kit 2 uses real React (16) rather than React-like hooks, so can use more standard techniques  
+- UI Kit 2 uses real React (18) rather than React-like hooks, so can use more standard techniques  
 
 ### Negative Consequences
 

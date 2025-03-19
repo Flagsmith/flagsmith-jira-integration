@@ -10,5 +10,5 @@ ForgeReconciler.render(
       checkSettings="app"
       renderChild={(setError) => <ProjectSettingsPage setError={setError} />}
     />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

@@ -33,7 +33,7 @@ const IssueFeaturesForm = ({
         label: each.name,
         value: String(each.id),
       })),
-    [features]
+    [features],
   );
   const featureValue = featureOptions.filter((option) => featureIds.includes(option.value)) ?? null;
 

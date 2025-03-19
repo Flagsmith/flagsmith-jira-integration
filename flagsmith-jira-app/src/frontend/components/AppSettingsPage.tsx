@@ -16,7 +16,7 @@ import {
   Text,
   Textfield,
 } from "@forge/react";
-import React, { Fragment, useEffect, useId, useMemo, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useState } from "react";
 
 import { ApiError, usePromise } from "../../common";
 import { readOrganisations, readProjects } from "../flagsmith";
@@ -40,12 +40,12 @@ type AppSettingsFormProps = WrappableComponentProps & {
   saveOrganisationId: (organisationId: string) => Promise<void>;
 };
 
-const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
+const AppSettingsForm = ({
   setError,
   saveApiKey,
   saveOrganisationId,
   ...props
-}) => {
+}: AppSettingsFormProps): JSX.Element => {
   // set form state from props
   const [apiKey, setApiKey] = useState<string | null>(props.hasApiKey ? SENTINEL : null);
   useEffect(() => {
@@ -219,7 +219,7 @@ const AppSettingsForm: React.FC<AppSettingsFormProps> = ({
   );
 };
 
-const AppSettingsPage: React.FC<WrappableComponentProps> = ({ setError }) => {
+const AppSettingsPage = ({ setError }: WrappableComponentProps): JSX.Element => {
   // get configuration from storage
   const [hasApiKey, setHasApiKey] = usePromise(
     async () => {
