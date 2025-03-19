@@ -31,18 +31,26 @@ const head = {
     {
       key: "environment",
       content: "Environment",
+      isSortable: true,
+      width: 30,
     },
     {
       key: "status",
       content: "Status",
+      isSortable: true,
+      width: 20,
     },
     {
       key: "value",
       content: "Value",
+      isSortable: true,
+      width: 30,
     },
     {
       key: "last-updated",
       content: "Last updated",
+      isSortable: true,
+      width: 20,
     },
   ],
 };
@@ -64,7 +72,7 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
         key: `${state.feature_id}`,
         cells: [
           {
-            key: "environment",
+            key: `environment--${stateEnvironment.name.toLowerCase()}`,
             content: (
               <Fragment>
                 <Text>
@@ -94,7 +102,7 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
             ),
           },
           {
-            key: "status",
+            key: `status--${stateEnvironment.enabled ? 1 : 0}`,
             content: (
               <Lozenge appearance={stateEnvironment.enabled ? "success" : "default"}>
                 {stateEnvironment.enabled ? "on" : "off"}
@@ -102,11 +110,11 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
             ),
           },
           {
-            key: "value",
+            key: `value--${stateEnvironment.feature_state_value}`,
             content: stateEnvironment.feature_state_value,
           },
           {
-            key: "last-updated",
+            key: `last-updated--${String(new Date(stateEnvironment.updated_at).getTime())}`,
             content: (
               <Lozenge>
                 {new Date(stateEnvironment.updated_at).toLocaleDateString(undefined, {
@@ -197,20 +205,22 @@ const IssueFeatureTables = ({
       {features
         .filter((feature) => issueFeatureIds.includes(String(feature.id)))
         .map((feature) => (
-          <Box key={feature.id} xcss={{ marginTop: "space.300" }}>
-            <Text>
-              <Strong>
-                {feature.name}
-                {feature.description ? ": " : ""}
-              </Strong>
-              {feature.description}
-            </Text>
+          <Fragment key={feature.id}>
+            <Box xcss={{ marginTop: "space.300", marginBottom: "space.100" }}>
+              <Text>
+                <Strong>
+                  {feature.name}
+                  {feature.description ? ": " : ""}
+                </Strong>
+                {feature.description}
+              </Text>
+            </Box>
             <IssueFeatureTable
               projectUrl={projectUrl}
               environments={environments}
               feature={feature}
             />
-          </Box>
+          </Fragment>
         ))}
     </Fragment>
   );
