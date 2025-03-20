@@ -21,22 +21,14 @@ import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import { ApiError, usePromise } from "../../common";
 import { readFeatures, readProjects } from "../flagsmith";
 import { readProjectId, writeProjectId } from "../jira";
-import { readOrganisationId } from "../storage";
 import { WrappableComponentProps } from "./ErrorWrapper";
 
 type ProjectSettingsFormProps = WrappableComponentProps & {
-  organisationId: string;
   projectId: string;
   saveProjectId: (projectId: string) => Promise<void>;
 };
 
-const ProjectSettingsForm = ({
-  setError,
-
-  organisationId,
-  saveProjectId,
-  ...props
-}: ProjectSettingsFormProps) => {
+const ProjectSettingsForm = ({ setError, saveProjectId, ...props }: ProjectSettingsFormProps) => {
   // set form state from props
   const [projectId, setProjectId] = useState<string | null>(props.projectId);
   useEffect(() => {
@@ -47,7 +39,7 @@ const ProjectSettingsForm = ({
   const [projects] = usePromise(
     async () => {
       try {
-        return await readProjects({ organisationId });
+        return await readProjects({});
       } catch (error) {
         // ignore 404 (no projects) as that is handled by the form
         if (
@@ -59,7 +51,7 @@ const ProjectSettingsForm = ({
         return [];
       }
     },
-    [organisationId],
+    [],
     setError,
   );
 
@@ -115,27 +107,26 @@ const ProjectSettingsForm = ({
     setProjectId("");
   };
 
-  const configured = !!organisationId;
-  const connected = configured && !!currentProject && features && features.length > 0;
+  const connected = !!currentProject && features && features.length > 0;
 
   return (
     <Fragment>
       <Box xcss={{ marginBottom: "space.300" }}>
         <Inline space="space.050" alignBlock="center">
           <Strong>Project:</Strong> {!!currentProject && <Text>{currentProject.name}</Text>}
-          {configured && !currentProject && projects && projects.length > 0 && !connected && (
+          {!currentProject && projects && projects.length > 0 && !connected && (
             <Lozenge appearance="moved">Not connected</Lozenge>
           )}
-          {configured && projects && projects.length === 0 && (
+          {projects && projects.length === 0 && (
             <Lozenge appearance="removed">No projects to connect</Lozenge>
           )}
-          {configured && !!currentProject && !!features && !connected && (
+          {!!currentProject && !!features && !connected && (
             <Lozenge appearance="removed">No features to connect</Lozenge>
           )}
           {connected && <Lozenge appearance="success">Connected</Lozenge>}
         </Inline>
       </Box>
-      {configured && !!projectOptions && (
+      {!!projectOptions && (
         <Form onSubmit={Promise.resolve}>
           <FormSection>
             <Label labelFor={projectInputId}>
@@ -166,8 +157,6 @@ const ProjectSettingsForm = ({
 };
 
 const ProjectSettingsPage = ({ setError }: WrappableComponentProps): JSX.Element => {
-  // get configuration from storage
-  const [organisationId] = usePromise(readOrganisationId, [], setError);
   // get project context extension
   const context = useProductContext();
   const extension = context?.extension;
@@ -185,21 +174,20 @@ const ProjectSettingsPage = ({ setError }: WrappableComponentProps): JSX.Element
 
   /** Write Project ID to Jira project and update form state */
   const saveProjectId = async (projectId: string) => {
-    if (extension) {
-      await writeProjectId(extension, projectId);
-      setProjectId(projectId);
+    try {
+      if (extension) {
+        await writeProjectId(extension, projectId);
+        setProjectId(projectId);
+      }
+    } catch (error) {
+      setError(error as Error);
     }
   };
 
-  const ready = organisationId !== undefined && extension !== undefined && projectId !== undefined;
+  const ready = extension !== undefined && projectId !== undefined;
 
   return ready ? (
-    <ProjectSettingsForm
-      setError={setError}
-      organisationId={organisationId}
-      projectId={projectId}
-      saveProjectId={saveProjectId}
-    />
+    <ProjectSettingsForm setError={setError} projectId={projectId} saveProjectId={saveProjectId} />
   ) : (
     <Spinner label="Loading configuration" />
   );

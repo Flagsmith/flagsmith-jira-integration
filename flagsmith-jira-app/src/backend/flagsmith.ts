@@ -1,7 +1,7 @@
 import api, { APIResponse, Route, assumeTrustedRoute, route } from "@forge/api";
 
 import { ApiArgs, ApiError, FLAGSMITH_API_V1 } from "../common";
-import { readApiKey } from "./storage";
+import { readApiKey, readOrganisationId } from "./storage";
 
 type Model = {
   id: number;
@@ -123,12 +123,13 @@ export const readOrganisations: ReadOrganisations = async ({ apiKey: givenApiKey
   return results;
 };
 
-export type ReadProjects = (args: { organisationId: string | undefined }) => Promise<Project[]>;
+export type ReadProjects = (args: { organisationId?: string }) => Promise<Project[]>;
 
-/** Read Flagsmith Projects for stored API Key and given Organisation ID */
-export const readProjects: ReadProjects = async ({ organisationId }) => {
+/** Read Flagsmith Projects for stored API Key and stored/given Organisation ID */
+export const readProjects: ReadProjects = async ({ organisationId: givenOrganisationId }) => {
   const apiKey = await readApiKey();
   checkApiKey(apiKey);
+  const organisationId = givenOrganisationId ?? (await readOrganisationId());
   if (!organisationId) throw new ApiError("Flagsmith organisation not connected", 400);
   const path = route`/projects/?organisation=${organisationId}`;
   const data = (await flagsmithApi(apiKey, path)) as Project[];
@@ -138,7 +139,7 @@ export const readProjects: ReadProjects = async ({ organisationId }) => {
   return results;
 };
 
-export type ReadEnvironments = (args: { projectId: string | undefined }) => Promise<Environment[]>;
+export type ReadEnvironments = (args: { projectId?: string }) => Promise<Environment[]>;
 
 /** Read Flagsmith Environments for stored API Key and given Project ID */
 export const readEnvironments: ReadEnvironments = async ({ projectId }) => {
@@ -152,7 +153,7 @@ export const readEnvironments: ReadEnvironments = async ({ projectId }) => {
   return results;
 };
 
-export type ReadFeatures = (args: { projectId: string | undefined }) => Promise<Feature[]>;
+export type ReadFeatures = (args: { projectId?: string }) => Promise<Feature[]>;
 
 /** Read Flagsmith Features for stored API Key and given Project ID */
 export const readFeatures: ReadFeatures = async ({ projectId }) => {

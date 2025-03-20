@@ -109,9 +109,13 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
 
   /** Write Feature IDs to Jira issue and update form state */
   const saveIssueFeatureIds = async (featureIds: string[]) => {
-    if (extension) {
-      await writeFeatureIds(extension, featureIds);
-      setFeatureIds(featureIds);
+    try {
+      if (extension) {
+        await writeFeatureIds(extension, featureIds);
+        setFeatureIds(featureIds);
+      }
+    } catch (error) {
+      setError(error as Error);
     }
   };
 

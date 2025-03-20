@@ -18,7 +18,7 @@ export {
 export const readOrganisations: ReadOrganisations = async ({ apiKey }) =>
   customInvoke("readOrganisations", { apiKey });
 
-/** Read Flagsmith Projects for stored API Key and given Organisation ID */
+/** Read Flagsmith Projects for stored API Key and stored/given Organisation ID */
 export const readProjects: ReadProjects = async ({ organisationId }) =>
   customInvoke("readProjects", { organisationId });
 

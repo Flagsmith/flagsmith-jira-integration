@@ -232,20 +232,28 @@ const AppSettingsPage = ({ setError }: WrappableComponentProps): JSX.Element => 
 
   /** Write API Key to storage and update form state */
   const saveApiKey = async (apiKey: string) => {
-    if (apiKey) {
-      await writeApiKey({ apiKey });
-    } else {
-      await deleteApiKey();
+    try {
+      if (apiKey) {
+        await writeApiKey({ apiKey });
+      } else {
+        await deleteApiKey();
+      }
+    } catch (error) {
+      setError(error as Error);
     }
     setHasApiKey(!!apiKey);
   };
 
   /** Write Organisation ID to storage and update form state */
   const saveOrganisationId = async (organisationId: string) => {
-    if (organisationId) {
-      await writeOrganisationId({ organisationId });
-    } else {
-      await deleteOrganisationId();
+    try {
+      if (organisationId) {
+        await writeOrganisationId({ organisationId });
+      } else {
+        await deleteOrganisationId();
+      }
+    } catch (error) {
+      setError(error as Error);
     }
     setOrganisationId(organisationId);
   };
