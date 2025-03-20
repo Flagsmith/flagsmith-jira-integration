@@ -61,10 +61,12 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
     .map((stateEnvironment) => {
       // count variations/overrides
       const variations = stateEnvironment.multivariate_feature_state_values.length;
+      // TODO later: per-segment feature states are no longer returned so this doesn't work?
       const segments = state.environments.filter(
         (each) =>
           String(each.feature) === String(state.feature_id) && each.feature_segment !== null,
       ).length;
+      // TODO later: per-identity feature states are no longer returned so this doesn't work?
       const identities = state.environments.filter(
         (each) => String(each.feature) === String(state.feature_id) && each.identity !== null,
       ).length;
