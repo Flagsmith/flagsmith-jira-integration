@@ -83,12 +83,16 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
     setError,
   );
 
-  // get features from Flagsmith API
-  const [features] = usePromise(
+  // get features in the context of each environment from Flagsmith API
+  const [environmentsFeatures] = usePromise(
     async () => {
       try {
-        if (projectId !== undefined) {
-          return await readFeatures({ projectId });
+        if (projectId !== undefined && environments !== undefined) {
+          return await Promise.all(
+            environments.map((environment) =>
+              readFeatures({ projectId, environmentId: String(environment.id) }),
+            ),
+          );
         } else {
           return undefined;
         }
@@ -103,7 +107,7 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         return [];
       }
     },
-    [projectId],
+    [projectId, environments],
     setError,
   );
 
@@ -125,14 +129,16 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
     extension !== undefined &&
     projectId !== undefined &&
     featureIds !== undefined &&
-    features !== undefined &&
-    environments !== undefined;
+    environments !== undefined &&
+    environmentsFeatures !== undefined;
 
   return ready ? (
     <Fragment>
       {canEdit && (
         <IssueFeaturesForm
-          features={features}
+          // use features from the first environment for form
+          // (id/name are the same across environments)
+          features={environmentsFeatures[0] ?? []}
           issueFeatureIds={featureIds}
           saveIssueFeatureIds={saveIssueFeatureIds}
           canEdit={canEdit}
@@ -142,8 +148,9 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
       )}
       <IssueFeatureTables
         projectUrl={projectUrl}
+        // environments/environmentsFeatures are assumed to be same length/order
         environments={environments}
-        features={features}
+        environmentsFeatures={environmentsFeatures}
         issueFeatureIds={featureIds}
       />
     </Fragment>

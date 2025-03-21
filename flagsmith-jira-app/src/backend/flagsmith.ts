@@ -24,6 +24,9 @@ export type Feature = Model & {
   description: string;
   archived_at: string | null;
   created_date: string;
+  multivariate_options: unknown[];
+  num_segment_overrides: number | null;
+  num_identity_overrides: number | null;
 };
 
 export type EnvironmentFeatureState = Model & {
@@ -153,17 +156,21 @@ export const readEnvironments: ReadEnvironments = async ({ projectId }) => {
   return results;
 };
 
-export type ReadFeatures = (args: { projectId?: string }) => Promise<Feature[]>;
+export type ReadFeatures = (args: {
+  projectId?: string;
+  environmentId?: string;
+}) => Promise<Feature[]>;
 
-/** Read Flagsmith Features for stored API Key and given Project ID */
-export const readFeatures: ReadFeatures = async ({ projectId }) => {
+/** Read Flagsmith Features for stored API Key, given Project ID and optional Environment ID */
+export const readFeatures: ReadFeatures = async ({ projectId, environmentId }) => {
   const apiKey = await readApiKey();
   checkApiKey(apiKey);
   if (!projectId) throw new ApiError("Flagsmith project not connected", 400);
-  const path = route`/projects/${projectId}/features/`;
+  const params = new URLSearchParams({ is_archived: "false" });
+  if (environmentId) params.set("environment", environmentId);
+  const path = route`/projects/${projectId}/features/?${params}`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Feature>;
-  // ignore archived features
-  const results = (await unpaginate(apiKey, data)).filter((each) => !each.archived_at);
+  const results = await unpaginate(apiKey, data);
   if (results.length === 0) throw new ApiError("Flagsmith project has no features", 404);
   return results;
 };

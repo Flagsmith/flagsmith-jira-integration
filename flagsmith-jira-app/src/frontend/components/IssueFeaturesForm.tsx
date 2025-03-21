@@ -19,7 +19,7 @@ const IssueFeaturesForm = ({
   editing,
   setEditing,
   ...props
-}: IssueFlagFormProps) => {
+}: IssueFlagFormProps): JSX.Element => {
   // set form state from props
   const [featureIds, setFeatureIds] = useState<string[]>(props.issueFeatureIds);
   useEffect(() => {

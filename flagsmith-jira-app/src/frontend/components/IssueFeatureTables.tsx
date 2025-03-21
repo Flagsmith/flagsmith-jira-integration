@@ -22,8 +22,13 @@ import {
 } from "../flagsmith";
 
 type FeatureState = {
-  feature_id: number;
+  featureId: number;
   environments: EnvironmentFeatureState[];
+  counts: {
+    variations: number;
+    segments: number;
+    identities: number;
+  }[];
 };
 
 const head = {
@@ -58,20 +63,12 @@ const head = {
 const makeRows = (projectUrl: string, state: FeatureState) => {
   return state.environments
     .filter((stateEnvironment) => !!stateEnvironment)
-    .map((stateEnvironment) => {
-      // count variations/overrides
-      const variations = stateEnvironment.multivariate_feature_state_values.length;
-      // TODO later: per-segment feature states are no longer returned so this doesn't work?
-      const segments = state.environments.filter(
-        (each) =>
-          String(each.feature) === String(state.feature_id) && each.feature_segment !== null,
-      ).length;
-      // TODO later: per-identity feature states are no longer returned so this doesn't work?
-      const identities = state.environments.filter(
-        (each) => String(each.feature) === String(state.feature_id) && each.identity !== null,
-      ).length;
+    .map((stateEnvironment, index) => {
+      const variations = state.counts[index]?.variations;
+      const segments = state.counts[index]?.segments;
+      const identities = state.counts[index]?.identities;
       return {
-        key: `${state.feature_id}`,
+        key: `${state.featureId}`,
         cells: [
           {
             key: `environment--${stateEnvironment.name.toLowerCase()}`,
@@ -79,23 +76,23 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
               <Fragment>
                 <Text>
                   <Link
-                    href={`${projectUrl}/environment/${stateEnvironment.api_key}/features?feature=${state.feature_id}`}
+                    href={`${projectUrl}/environment/${stateEnvironment.api_key}/features?feature=${state.featureId}`}
                     openNewTab
                   >
                     {stateEnvironment.name}
                   </Link>
                 </Text>
-                {variations > 0 && (
+                {!!variations && (
                   <Badge appearance="default">{`${variations} variation${
                     variations === 1 ? "" : "s"
                   }`}</Badge>
                 )}
-                {segments > 0 && (
+                {!!segments && (
                   <Badge appearance="default">{`${segments} segment${
                     segments === 1 ? "" : "s"
                   }`}</Badge>
                 )}
-                {identities > 0 && (
+                {!!identities && (
                   <Badge appearance="default">{`${identities} identit${
                     identities === 1 ? "y" : "ies"
                   }`}</Badge>
@@ -134,30 +131,44 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
 
 type IssueFeatureTableProps = {
   projectUrl: string;
-  environments: Environment[];
-  feature: Feature;
+  environments: Environment[]; // must be non-empty
+  // list of same feature in the context of each environment
+  environmentFeatures: Feature[];
 };
 
-const IssueFeatureTable = ({ projectUrl, environments, feature }: IssueFeatureTableProps) => {
+const IssueFeatureTable = ({
+  projectUrl,
+  environments,
+  environmentFeatures,
+}: IssueFeatureTableProps): JSX.Element => {
   // catch API errors per table rather than cause whole component to fail
   const [error, setError] = useState<Error>();
+
+  // get id and name from first feature - assume non-empty
+  const featureId = environmentFeatures[0]!.id;
+  const featureName = environmentFeatures[0]!.name;
 
   /** Read feature state for each environment */
   const readFeatureState = useCallback(
     async (): Promise<FeatureState> => ({
-      feature_id: feature.id,
+      featureId,
       environments: await Promise.all(
         environments.map(async (environment) => ({
           ...(await readEnvironmentFeatureState({
             envApiKey: String(environment.api_key),
-            featureName: feature.name,
+            featureName,
           })),
           name: environment.name,
           api_key: String(environment.api_key),
         })),
       ),
+      counts: environmentFeatures.map((feature) => ({
+        variations: feature.multivariate_options.length,
+        segments: feature.num_segment_overrides ?? 0,
+        identities: feature.num_identity_overrides ?? 0,
+      })),
     }),
-    [environments, feature],
+    [environments, environmentFeatures],
   );
   const [state] = usePromise(
     async () => (error === undefined ? readFeatureState() : undefined),
@@ -187,26 +198,35 @@ const IssueFeatureTable = ({ projectUrl, environments, feature }: IssueFeatureTa
 
 type IssueFeatureTablesProps = {
   projectUrl: string;
+  // environments/environmentsFeatures are assumed to be same length/order
   environments: Environment[];
-  features: Feature[];
+  environmentsFeatures: Feature[][];
   issueFeatureIds: string[];
 };
 
 const IssueFeatureTables = ({
   projectUrl,
   environments,
-  features,
+  environmentsFeatures,
   issueFeatureIds,
-}: IssueFeatureTablesProps) => {
-  if (features.length === 0 || issueFeatureIds.length === 0) {
-    return null;
+}: IssueFeatureTablesProps): JSX.Element => {
+  if (
+    environmentsFeatures.length === 0 ||
+    environmentsFeatures[0] === undefined ||
+    issueFeatureIds.length === 0
+  ) {
+    return <Fragment />;
   }
+
+  // iterate features from the first environment to get list of tables
+  // (id/name/description are the same across environments)
+  const features = environmentsFeatures[0];
 
   return (
     <Fragment>
       {features
         .filter((feature) => issueFeatureIds.includes(String(feature.id)))
-        .map((feature) => (
+        .map((feature, index) => (
           <Fragment key={feature.id}>
             <Box xcss={{ marginTop: "space.300", marginBottom: "space.100" }}>
               <Text>
@@ -220,7 +240,10 @@ const IssueFeatureTables = ({
             <IssueFeatureTable
               projectUrl={projectUrl}
               environments={environments}
-              feature={feature}
+              // retrieve list of same feature from each environment
+              environmentFeatures={environmentsFeatures.map(
+                (features) => features[index] as Feature,
+              )}
             />
           </Fragment>
         ))}
