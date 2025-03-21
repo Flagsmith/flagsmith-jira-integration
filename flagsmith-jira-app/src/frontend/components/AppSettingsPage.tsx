@@ -157,7 +157,9 @@ const AppSettingsForm = ({
     <Fragment>
       <Box xcss={{ marginBottom: "space.300" }}>
         <Inline space="space.050" alignBlock="center">
-          <Strong>Organisation:</Strong>{" "}
+          <Text>
+            <Strong>Organisation:</Strong>
+          </Text>{" "}
           {!!currentOrganisation && <Text>{currentOrganisation.name}</Text>}
           {!apiKeyInvalid && !currentOrganisation && (
             <Lozenge appearance="moved">Not connected</Lozenge>

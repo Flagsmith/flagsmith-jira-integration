@@ -113,7 +113,10 @@ const ProjectSettingsForm = ({ setError, saveProjectId, ...props }: ProjectSetti
     <Fragment>
       <Box xcss={{ marginBottom: "space.300" }}>
         <Inline space="space.050" alignBlock="center">
-          <Strong>Project:</Strong> {!!currentProject && <Text>{currentProject.name}</Text>}
+          <Text>
+            <Strong>Project:</Strong>
+          </Text>{" "}
+          {!!currentProject && <Text>{currentProject.name}</Text>}
           {!currentProject && projects && projects.length > 0 && !connected && (
             <Lozenge appearance="moved">Not connected</Lozenge>
           )}
