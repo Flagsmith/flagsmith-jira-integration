@@ -1,6 +1,6 @@
 # Use UI Kit
 
-- Status: Accepted
+- Status: Superseded by [Use UI Kit 2](0004-use-ui-kit-2.md)
 
 ## Context and Problem Statement
 
@@ -10,7 +10,7 @@ project settings, issue panel, menus, modals, etc).
 ## Decision Drivers
 
 - Overall requirement to quickly tick the box that Flagsmith has a Jira integration and offer MVP functionality which
-  can be iterated on later.
+  can be iterated on later
 
 ## Considered Options
 
@@ -39,7 +39,7 @@ transition.
 
 ## Links
 
-- https://developer.atlassian.com/platform/forge/ui-kit-components/
-- https://developer.atlassian.com/platform/forge/ui-kit-2/
-- https://developer.atlassian.com/platform/forge/custom-ui/iframe/
-- https://trello.com/b/z2GIJ3xD/forge-roadmap-for-developers
+- <https://developer.atlassian.com/platform/forge/ui-kit-components/>
+- <https://developer.atlassian.com/platform/forge/ui-kit-2/>
+- <https://developer.atlassian.com/platform/forge/custom-ui/iframe/>
+- <https://trello.com/b/z2GIJ3xD/forge-roadmap-for-developers>

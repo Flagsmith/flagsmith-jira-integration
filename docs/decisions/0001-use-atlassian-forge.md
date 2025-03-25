@@ -10,7 +10,7 @@ Atlassian Marketplace.
 ## Decision Drivers
 
 - Overall requirement to quickly tick the box that Flagsmith has a Jira integration and offer MVP functionality which
-  can be iterated on later.
+  can be iterated on later
 
 ## Considered Options
 
@@ -37,4 +37,4 @@ capacity to scale to meet future requirements.
 
 ## Links
 
-- https://developer.atlassian.com/developer-guide/cloud-development-options/
+- <https://developer.atlassian.com/developer-guide/cloud-development-options/>
