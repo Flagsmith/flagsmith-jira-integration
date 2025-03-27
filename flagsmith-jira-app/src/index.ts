@@ -86,16 +86,22 @@ resolver
   .define("readEnvironments", async ({ payload: { projectId } }) =>
     // this API may be called for projects in the current organisation
     // TODO later: consider caching or refactoring to reduce calls to readProjects (or use RBAC key)
-    checkPermission(async () =>
-      (await readProjects({})).some((project) => String(project.id) === projectId),
-    ).then(() => readEnvironments({ projectId }).catch(returnError)),
+    checkPermission(
+      async () =>
+        !projectId || (await readProjects({})).some((project) => String(project.id) === projectId),
+    )
+      .then(() => readEnvironments({ projectId }))
+      .catch(returnError),
   )
   .define("readFeatures", async ({ payload: { projectId, environmentId } }) =>
     // this API may be called for projects in the current organisation
     // TODO later: consider caching or refactoring to reduce calls to readProjects (or use RBAC key)
-    checkPermission(async () =>
-      (await readProjects({})).some((project) => String(project.id) === projectId),
-    ).then(() => readFeatures({ projectId, environmentId }).catch(returnError)),
+    checkPermission(
+      async () =>
+        !projectId || (await readProjects({})).some((project) => String(project.id) === projectId),
+    )
+      .then(() => readFeatures({ projectId, environmentId }))
+      .catch(returnError),
   )
   .define("readEnvironmentFeatureState", async ({ payload: { envApiKey, featureName } }) =>
     // TODO later: consider checking if the environment is in the project (or use RBAC key)
