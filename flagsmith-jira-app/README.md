@@ -22,6 +22,14 @@ Data is pulled from the Flagsmith API on demand from the UI.
 
 See [README.md](../README.md) in the containing folder for instructions to get set up.
 
+### Install dependencies
+
+First ensure you're in the `flagsmith-jira-app` folder, not the containing folder.
+
+Then install the app dependencies so that Forge can build the app locally.
+
+    npm ci
+
 ## Quick start
 
 ### Developer Console
@@ -36,19 +44,19 @@ The app is defined in the `manifest.yml` file.
 This includes the `id` of the app within Atlassian Cloud. Change this value to deploy code to a different app, e.g. one
 created in a developer account.
 
-### Source Code
+### Source code
 
 The three frontend entry points to the app are contained in the `src/frontend` folder. These define React components for App
 Settings, Project Settings and Issue Panel. The resolver entry point for backend functions is in `src/index.ts`.
 
-### Linting and Formatting
+### Linting and formatting
 
 The Atlassian template provided some basic eslint config, to which sensible TypeScript/React/Prettier defaults have been
 added.
 
 Execute `npm run lint` to check linting and formatting.
 
-### Deployment and Installation
+### Deployment to Jira
 
 Forge apps may be deployed to one of three environments:
 
@@ -82,7 +90,7 @@ Use the `install` command and follow the prompts to install the app on a new sit
 Once the app is installed on a site, the site picks up changes you deploy without needing to rerun the install command.
 For major version changes the `--upgrade` flag must be used.
 
-### Debugging and Development
+### Debugging and development
 
 To log API calls set the `DEBUG` environment variable:
 

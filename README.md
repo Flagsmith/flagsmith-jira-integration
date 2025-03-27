@@ -6,7 +6,7 @@ app itself.
 See [developer.atlassian.com/platform/forge](https://developer.atlassian.com/platform/forge) for documentation and
 tutorials explaining Forge.
 
-## Architectural Decisions
+## Architectural decisions
 
 See [docs/decisions/README.md](docs/decisions/README.md) for decision records.
 
