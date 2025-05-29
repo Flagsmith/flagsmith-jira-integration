@@ -10,7 +10,7 @@
   "dependencies": {
     "@forge/bridge": "4.4.1",
     "@forge/react": "10.11.1",
-    "@forge/resolver": "1.6.7",
+    "@forge/resolver": "1.6.10",
     "react": "^18.2.0"
   },
   "devDependencies": {
