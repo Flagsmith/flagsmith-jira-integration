@@ -30,7 +30,7 @@ const IssueFeaturesForm = ({
   const featureOptions = useMemo(
     () =>
       features.map((each) => ({
-        label: each.name,
+        label: each.name, // might need to change this to localise for a project, or include description?
         value: String(each.id),
       })),
     [features],

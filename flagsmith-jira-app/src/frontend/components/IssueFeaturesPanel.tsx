@@ -1,10 +1,10 @@
 import { Spinner, useProductContext } from "@forge/react";
 import { Fragment, useEffect, useState } from "react";
 
-import { ApiError, FLAGSMITH_APP, usePromise } from "../../common";
+import { ApiError, usePromise } from "../../common";
 import { canEditIssue } from "../auth";
 import { readEnvironments, readFeatures } from "../flagsmith";
-import { readFeatureIds, readProjectId, writeFeatureIds } from "../jira";
+import { readFeatureIds, readProjectIds, writeFeatureIds } from "../jira";
 
 import { WrappableComponentProps } from "./ErrorWrapper";
 import IssueFeaturesForm from "./IssueFeaturesForm";
@@ -16,10 +16,10 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   const extension = context?.extension;
 
   // get Flagsmith project ID from Jira project
-  const [projectId] = usePromise(
+  const [projectIds] = usePromise(
     async () => {
       if (extension) {
-        return await readProjectId(extension);
+        return await readProjectIds(extension);
       }
       return undefined;
     },
@@ -60,11 +60,12 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   }, [extension?.isNewToIssue, canEdit]);
 
   // get environments from Flagsmith API
+  // TODO: Do we need to handle multiple environments? I think probably not
   const [environments] = usePromise(
     async () => {
       try {
-        if (projectId !== undefined) {
-          return await readEnvironments({ projectId });
+        if (projectIds && projectIds[0] !== undefined) {
+          return await readEnvironments({ projectId: projectIds[0] });
         } else {
           return undefined;
         }
@@ -79,7 +80,7 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         return [];
       }
     },
-    [projectId],
+    [projectIds],
     setError,
   );
 
@@ -87,10 +88,10 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   const [environmentsFeatures] = usePromise(
     async () => {
       try {
-        if (projectId !== undefined && environments !== undefined) {
+        if (projectIds && projectIds.length > 0 && environments !== undefined) {
           return await Promise.all(
             environments.map((environment) =>
-              readFeatures({ projectId, environmentId: String(environment.id) }),
+              readFeatures({ projectIds, environmentId: String(environment.id) }),
             ),
           );
         } else {
@@ -107,7 +108,7 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         return [];
       }
     },
-    [projectId, environments],
+    [projectIds, environments],
     setError,
   );
 
@@ -123,11 +124,10 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
     }
   };
 
-  const projectUrl = `${FLAGSMITH_APP}/project/${projectId}`;
-
   const ready =
     extension !== undefined &&
-    projectId !== undefined &&
+    projectIds !== undefined &&
+    projectIds.length > 0 &&
     featureIds !== undefined &&
     environments !== undefined &&
     environmentsFeatures !== undefined;
@@ -147,7 +147,7 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         />
       )}
       <IssueFeatureTables
-        projectUrl={projectUrl}
+        projectIds={projectIds}
         // environments/environmentsFeatures are assumed to be same length/order
         environments={environments}
         environmentsFeatures={environmentsFeatures}
