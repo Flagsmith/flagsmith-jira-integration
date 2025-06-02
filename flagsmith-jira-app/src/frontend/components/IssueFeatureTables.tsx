@@ -13,7 +13,7 @@ import {
 } from "@forge/react";
 import { Fragment, useCallback, useState } from "react";
 
-import { usePromise } from "../../common";
+import { FLAGSMITH_APP, usePromise } from "../../common";
 import {
   Environment,
   EnvironmentFeatureState,
@@ -130,14 +130,14 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
 };
 
 type IssueFeatureTableProps = {
-  projectUrl: string;
+  projectIds: string[];
   environments: Environment[]; // must be non-empty
   // list of same feature in the context of each environment
   environmentFeatures: Feature[];
 };
 
 const IssueFeatureTable = ({
-  projectUrl,
+  projectIds,
   environments,
   environmentFeatures,
 }: IssueFeatureTableProps): JSX.Element => {
@@ -147,6 +147,8 @@ const IssueFeatureTable = ({
   // get id and name from first feature - assume non-empty
   const featureId = environmentFeatures[0]!.id;
   const featureName = environmentFeatures[0]!.name;
+
+  const projectUrl = `${FLAGSMITH_APP}/project/${projectIds[0]}`; // TODO
 
   /** Read feature state for each environment */
   const readFeatureState = useCallback(
@@ -197,7 +199,7 @@ const IssueFeatureTable = ({
 };
 
 type IssueFeatureTablesProps = {
-  projectUrl: string;
+  projectIds: string[];
   // environments/environmentsFeatures are assumed to be same length/order
   environments: Environment[];
   environmentsFeatures: Feature[][];
@@ -205,7 +207,7 @@ type IssueFeatureTablesProps = {
 };
 
 const IssueFeatureTables = ({
-  projectUrl,
+  projectIds,
   environments,
   environmentsFeatures,
   issueFeatureIds,
@@ -238,7 +240,7 @@ const IssueFeatureTables = ({
               </Text>
             </Box>
             <IssueFeatureTable
-              projectUrl={projectUrl}
+              projectIds={projectIds}
               environments={environments}
               // retrieve list of same feature from each environment
               environmentFeatures={environmentsFeatures.map(
