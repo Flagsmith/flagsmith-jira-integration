@@ -79,27 +79,41 @@ const deleteEntityProperty = async (
   });
 };
 
-const PROJECT_ID = "flagsmith.project";
+const PROJECT_IDS = "flagsmith.project";
 const FEATURE_IDS = "flagsmith.features";
 
-/** Read Flagsmith Project ID stored on Jira Project */
-export const readProjectId = async (extension: ExtensionData): Promise<string> => {
+/** Read Flagsmith Project IDs stored on Jira Project */
+export const readProjectIds = async (extension: ExtensionData): Promise<string[]> => {
   const entityType = "project";
   const entityId = String(extension[entityType].id);
-  return (await getEntityProperty(entityType, entityId, PROJECT_ID)) ?? "";
+  const stored = await getEntityProperty(entityType, entityId, PROJECT_IDS);
+
+  if (!stored) {
+    return [];
+  }
+
+  if (typeof stored === "string") {
+    return [stored]; // Wrap single string in array
+  }
+
+  if (Array.isArray(stored)) {
+    return stored; // Already an array, perfect
+  }
+
+  throw new Error(`Unexpected type for projectIds: ${typeof stored}`);
 };
 
 /** Write Flagsmith Project ID stored on Jira Project */
-export const writeProjectId = async (
+export const writeProjectIds = async (
   extension: ExtensionData,
-  projectId: string,
+  projectIds: string[],
 ): Promise<void> => {
   const entityType = "project";
   const entityId = String(extension[entityType].id);
-  if (projectId) {
-    return await setEntityProperty(entityType, entityId, PROJECT_ID, projectId);
+  if (projectIds && projectIds.length > 0) {
+    return await setEntityProperty(entityType, entityId, PROJECT_IDS, projectIds);
   } else {
-    return await deleteEntityProperty(entityType, entityId, PROJECT_ID);
+    return await deleteEntityProperty(entityType, entityId, PROJECT_IDS);
   }
 };
 

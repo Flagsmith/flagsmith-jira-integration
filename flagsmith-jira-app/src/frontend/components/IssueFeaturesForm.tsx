@@ -27,15 +27,32 @@ const IssueFeaturesForm = ({
   }, [props.issueFeatureIds]);
 
   const featureInputId = useId();
-  const featureOptions = useMemo(
-    () =>
-      features.map((each) => ({
-        label: each.name,
-        value: String(each.id),
-      })),
-    [features],
-  );
-  const featureValue = featureOptions.filter((option) => featureIds.includes(option.value)) ?? null;
+  const featureOptions = useMemo(() => {
+    const grouped = features.reduce(
+      (acc, feature) => {
+        const projectGroup = acc.find((group) => group.label === feature.project_name);
+        const option = {
+          label: feature.name,
+          value: String(feature.id),
+        };
+        if (projectGroup) {
+          projectGroup.options.push(option);
+        } else {
+          acc.push({
+            label: feature.project_name,
+            options: [option],
+          });
+        }
+        return acc;
+      },
+      [] as { label: string; options: { label: string; value: string }[] }[],
+    );
+    return grouped;
+  }, [features]);
+  const featureValue =
+    featureOptions
+      .flatMap((group) => group.options)
+      .filter((option) => featureIds.includes(option.value)) ?? null;
 
   const onFeatureChange = async (options: { value: string }[]) => {
     const featureIds = options.map((option) => option.value);
