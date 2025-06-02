@@ -79,27 +79,27 @@ const deleteEntityProperty = async (
   });
 };
 
-const PROJECT_ID = "flagsmith.project";
+const PROJECT_IDS = "flagsmith.project";
 const FEATURE_IDS = "flagsmith.features";
 
-/** Read Flagsmith Project ID stored on Jira Project */
-export const readProjectId = async (extension: ExtensionData): Promise<string> => {
+/** Read Flagsmith Project IDs stored on Jira Project */
+export const readProjectIds = async (extension: ExtensionData): Promise<string[]> => {
   const entityType = "project";
   const entityId = String(extension[entityType].id);
-  return (await getEntityProperty(entityType, entityId, PROJECT_ID)) ?? "";
+  return (await getEntityProperty(entityType, entityId, PROJECT_IDS)) ?? [];
 };
 
 /** Write Flagsmith Project ID stored on Jira Project */
-export const writeProjectId = async (
+export const writeProjectIds = async (
   extension: ExtensionData,
-  projectId: string,
+  projectIds: string[],
 ): Promise<void> => {
   const entityType = "project";
   const entityId = String(extension[entityType].id);
-  if (projectId) {
-    return await setEntityProperty(entityType, entityId, PROJECT_ID, projectId);
+  if (projectIds) {
+    return await setEntityProperty(entityType, entityId, PROJECT_IDS, projectIds);
   } else {
-    return await deleteEntityProperty(entityType, entityId, PROJECT_ID);
+    return await deleteEntityProperty(entityType, entityId, PROJECT_IDS);
   }
 };
 
