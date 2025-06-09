@@ -224,29 +224,38 @@ const IssueFeatureTables = ({
 
   return (
     <Fragment>
-      {features
-        .filter((feature) => issueFeatureIds.includes(String(feature.id)))
-        .map((feature, index) => (
-          <Fragment key={feature.id}>
+      {issueFeatureIds.map((featureId) => {
+        const baseFeature = features.find((f) => String(f.id) === featureId);
+        if (!baseFeature) {
+          return null;
+        }
+
+        const envFeaturesForThisFeature = environmentsFeatures
+          .map((envFeatures) => {
+            const matchingFeature = envFeatures.find((f) => String(f.id) === featureId);
+            return matchingFeature;
+          })
+          .filter(Boolean) as Feature[];
+
+        return (
+          <Fragment key={featureId}>
             <Box xcss={{ marginTop: "space.300", marginBottom: "space.100" }}>
               <Text>
                 <Strong>
-                  {feature.name}
-                  {feature.description ? ": " : ""}
+                  {baseFeature.name}
+                  {baseFeature.description ? ": " : ""}
                 </Strong>
-                {feature.description}
+                {baseFeature.description}
               </Text>
             </Box>
             <IssueFeatureTable
               projectUrl={projectUrl}
               environments={environments}
-              // retrieve list of same feature from each environment
-              environmentFeatures={environmentsFeatures.map(
-                (features) => features[index] as Feature,
-              )}
+              environmentFeatures={envFeaturesForThisFeature}
             />
           </Fragment>
-        ))}
+        );
+      })}
     </Fragment>
   );
 };
