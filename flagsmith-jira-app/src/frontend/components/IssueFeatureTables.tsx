@@ -151,29 +151,47 @@ const IssueFeatureTable = ({
   const projectUrl = `${FLAGSMITH_APP}/project/${projectIds[0]}`; // TODO
 
   /** Read feature state for each environment */
-  const readFeatureState = useCallback(
-    async (): Promise<FeatureState> => ({
+  const readFeatureState = useCallback(async (): Promise<FeatureState> => {
+    const featureProjectId = environmentFeatures[0]?.project;
+
+    const environmentFeatureStates = await Promise.all(
+      environments
+        .filter((env) => String(env.project) === String(featureProjectId))
+        .map(async (environment) => {
+          return {
+            ...(await readEnvironmentFeatureState({
+              envApiKey: String(environment.api_key),
+              featureName,
+            })),
+            name: environment.name,
+            api_key: String(environment.api_key),
+          };
+        }),
+    );
+
+    return {
       featureId,
-      environments: await Promise.all(
-        environments.map(async (environment) => ({
-          ...(await readEnvironmentFeatureState({
-            envApiKey: String(environment.api_key),
-            featureName,
-          })),
-          name: environment.name,
-          api_key: String(environment.api_key),
-        })),
-      ),
+      environments: environmentFeatureStates,
       counts: environmentFeatures.map((feature) => ({
         variations: feature.multivariate_options.length,
         segments: feature.num_segment_overrides ?? 0,
         identities: feature.num_identity_overrides ?? 0,
       })),
-    }),
-    [environments, environmentFeatures],
-  );
+    };
+  }, [environments, environmentFeatures]);
+
   const [state] = usePromise(
-    async () => (error === undefined ? readFeatureState() : undefined),
+    async () => {
+      if (error === undefined) {
+        try {
+          return await readFeatureState();
+        } catch (err) {
+          console.error("[ERROR] Failed to read feature state:", err);
+          throw err;
+        }
+      }
+      return undefined;
+    },
     [error, readFeatureState],
     setError,
   );
@@ -227,17 +245,36 @@ const IssueFeatureTables = ({
   return (
     <Fragment>
       {issueFeatureIds.map((featureId) => {
+        console.log("[DEBUG] Processing featureId:", featureId);
+
         const baseFeature = features.find((f) => String(f.id) === featureId);
         if (!baseFeature) {
+          console.warn("[WARN] baseFeature not found for featureId:", featureId);
           return null;
         }
 
-        const envFeaturesForThisFeature = environmentsFeatures
-          .map((envFeatures) => {
-            const matchingFeature = envFeatures.find((f) => String(f.id) === featureId);
-            return matchingFeature;
-          })
-          .filter(Boolean) as Feature[];
+        const envFeaturesForThisFeature: Feature[] = [];
+        const matchingEnvironments: Environment[] = [];
+
+        environmentsFeatures.forEach((envFeatures, index) => {
+          const matchingFeature = envFeatures.find((f) => String(f.id) === featureId);
+          const environment = environments[index];
+          if (matchingFeature && environment !== undefined) {
+            envFeaturesForThisFeature.push(matchingFeature);
+            matchingEnvironments.push(environment);
+          }
+        });
+
+        console.log(
+          `[DEBUG] FeatureId: ${featureId} — envFeaturesForThisFeature.length: ${envFeaturesForThisFeature.length}, matchingEnvironments.length: ${matchingEnvironments.length}`,
+        );
+
+        if (envFeaturesForThisFeature.length === 0 || matchingEnvironments.length === 0) {
+          console.warn(
+            `[WARN] Skipping featureId ${featureId} — no matching features or environments`,
+          );
+          return null;
+        }
 
         return (
           <Fragment key={featureId}>
@@ -252,7 +289,7 @@ const IssueFeatureTables = ({
             </Box>
             <IssueFeatureTable
               projectIds={projectIds}
-              environments={environments}
+              environments={matchingEnvironments}
               environmentFeatures={envFeaturesForThisFeature}
             />
           </Fragment>

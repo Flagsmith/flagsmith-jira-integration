@@ -17,7 +17,7 @@ type PaginatedModels<TModel extends Model> = {
 
 export type Organisation = Model;
 export type Project = Model;
-export type Environment = Model & { api_key: string };
+export type Environment = Model & { api_key: string; project: number };
 
 export type Feature = Model & {
   id: number | string;
@@ -27,6 +27,8 @@ export type Feature = Model & {
   multivariate_options: unknown[];
   num_segment_overrides: number | null;
   num_identity_overrides: number | null;
+  project: number;
+  projectName: string;
 };
 
 export type EnvironmentFeatureState = Model & {
@@ -171,6 +173,8 @@ export const readFeatures: ReadFeatures = async ({ projectIds, environmentId }) 
   }
 
   const allFeatures: Feature[] = [];
+  const organisationId = await readOrganisationId();
+  const projects = await readProjects({ organisationId });
 
   for (const projectId of projectIds) {
     const params = new URLSearchParams({ is_archived: "false" });
@@ -180,7 +184,19 @@ export const readFeatures: ReadFeatures = async ({ projectIds, environmentId }) 
     try {
       const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Feature>;
       const results = await unpaginate(apiKey, data);
-      allFeatures.push(...results);
+
+      const project = projects.find((p) => String(p.id) === String(projectId));
+
+      if (!project) {
+        throw new ApiError(`Flagsmith project ${projectId} not found`, 404);
+      }
+
+      const enrichedFeatures = results.map((feature) => ({
+        ...feature,
+        projectName: project.name,
+      }));
+
+      allFeatures.push(...enrichedFeatures);
     } catch (error) {
       // If a specific project has no features, we can log it but continue with others
       if (error instanceof ApiError && error.code === 404) {
@@ -198,19 +214,6 @@ export const readFeatures: ReadFeatures = async ({ projectIds, environmentId }) 
   return allFeatures;
 };
 
-// export const readFeatures: ReadFeatures = async ({ projectIds, environmentId }) => {
-//   const apiKey = await readApiKey();
-//   checkApiKey(apiKey);
-//   if (!projectIds) throw new ApiError("Flagsmith project not connected", 400);
-//   const params = new URLSearchParams({ is_archived: "false" });
-//   if (environmentId) params.set("environment", environmentId);
-//   const path = route`/projects/${projectId}/features/?${params}`;
-//   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Feature>;
-//   const results = await unpaginate(apiKey, data);
-//   if (results.length === 0) throw new ApiError("Flagsmith project has no features", 404);
-//   return results;
-// };
-
 export type ReadEnvironmentFeatureState = (args: {
   envApiKey: string;
   featureName: string;
@@ -224,6 +227,7 @@ export const readEnvironmentFeatureState: ReadEnvironmentFeatureState = async ({
   const apiKey = await readApiKey();
   checkApiKey(apiKey);
   if (!envApiKey) throw new ApiError("Flagsmith environment not connected", 400);
+
   const path = route`/environments/${envApiKey}/featurestates/?feature_name=${featureName}`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<EnvironmentFeatureState>;
   const results = await unpaginate(apiKey, data);

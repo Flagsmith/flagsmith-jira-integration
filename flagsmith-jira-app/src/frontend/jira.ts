@@ -86,7 +86,22 @@ const FEATURE_IDS = "flagsmith.features";
 export const readProjectIds = async (extension: ExtensionData): Promise<string[]> => {
   const entityType = "project";
   const entityId = String(extension[entityType].id);
-  return (await getEntityProperty(entityType, entityId, PROJECT_IDS)) ?? [];
+  const stored = await getEntityProperty(entityType, entityId, PROJECT_IDS);
+
+  if (!stored) {
+    return [];
+  }
+
+  if (typeof stored === "string") {
+    return [stored]; // Wrap single string in array
+  }
+
+  if (Array.isArray(stored)) {
+    return stored; // Already an array, perfect
+  }
+
+  // Optional: runtime safeguard
+  throw new Error(`Unexpected type for projectIds: ${typeof stored}`);
 };
 
 /** Write Flagsmith Project ID stored on Jira Project */
@@ -96,7 +111,7 @@ export const writeProjectIds = async (
 ): Promise<void> => {
   const entityType = "project";
   const entityId = String(extension[entityType].id);
-  if (projectIds) {
+  if (projectIds && projectIds.length > 0) {
     return await setEntityProperty(entityType, entityId, PROJECT_IDS, projectIds);
   } else {
     return await deleteEntityProperty(entityType, entityId, PROJECT_IDS);
