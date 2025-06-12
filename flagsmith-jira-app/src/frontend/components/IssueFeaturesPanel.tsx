@@ -64,13 +64,15 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   const [environments] = usePromise(
     async () => {
       try {
-        if (projectIds && projectIds[0] !== undefined) {
-          return await readEnvironments({ projectId: projectIds[0] });
-        } else {
-          return undefined;
+        if (projectIds && projectIds.length > 0) {
+          const all = await Promise.all(
+            projectIds.map((projectId) => readEnvironments({ projectId })),
+          );
+          console.log("[DEBUG] Retrieved environments:", all.flat());
+          return all.flat(); // Combine all environments into one flat array
         }
+        return [];
       } catch (error) {
-        // ignore 404 (no environments) as that is handled by the form
         if (
           !Object.prototype.hasOwnProperty.call(error, "code") ||
           ![404].includes((error as ApiError).code)
