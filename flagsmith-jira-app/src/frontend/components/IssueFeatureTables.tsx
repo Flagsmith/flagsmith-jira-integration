@@ -152,41 +152,16 @@ const IssueFeatureTable = ({
   const readFeatureState = useCallback(async (): Promise<FeatureState> => {
     const featureProjectId = environmentFeatures[0]?.project;
 
-    console.log("[DEBUG] readFeatureState() invoked");
-    console.log("[DEBUG] featureId:", featureId);
-    console.log("[DEBUG] featureName:", featureName);
-    console.log("[DEBUG] featureProjectId:", featureProjectId);
-    console.log(
-      `[DEBUG] All environments available:`,
-      environments.map((e) => ({ name: e.name, project: e.project })),
-    );
-
     const matchingEnvs = environments.filter(
       (env) => String(env.project) === String(featureProjectId),
-    );
-    console.log(
-      `[DEBUG] Environments matched to feature project ${featureProjectId}:`,
-      matchingEnvs.map((e) => e.name),
     );
 
     const environmentFeatureStates = await Promise.all(
       matchingEnvs.map(async (environment) => {
-        console.log("[DEBUG][1] Fetching state for:", {
-          featureName,
-          envApiKey: environment.api_key,
-          envName: environment.name,
-          projectId: environment.project,
-        });
-
         try {
           const state = await readEnvironmentFeatureState({
             envApiKey: String(environment.api_key),
             featureName,
-          });
-
-          console.log("[DEBUG][2] Feature state response:", {
-            envName: environment.name,
-            feature_state_value: state.feature_state_value,
           });
 
           return {
@@ -195,23 +170,16 @@ const IssueFeatureTable = ({
             api_key: String(environment.api_key),
           };
         } catch (err) {
-          console.error("[ERROR][3] Failed to fetch feature state for env:", {
-            featureName,
-            envApiKey: environment.api_key,
-            error: err,
-          });
           return null;
         }
       }),
     );
 
     const validStates = environmentFeatureStates.filter(Boolean);
-    console.log("[DEBUG][4] Valid feature states returned:", validStates);
 
     const relevantFeatures = environmentFeatures.filter(
       (f) => String(f.project) === String(featureProjectId),
     );
-    console.log("[DEBUG][5] Relevant features for count mapping:", relevantFeatures);
 
     return {
       featureId,

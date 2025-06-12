@@ -68,7 +68,6 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
           const all = await Promise.all(
             projectIds.map((projectId) => readEnvironments({ projectId })),
           );
-          console.log("[DEBUG] Retrieved environments:", all.flat());
           return all.flat(); // Combine all environments into one flat array
         }
         return [];
@@ -132,7 +131,10 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
     projectIds.length > 0 &&
     featureIds !== undefined &&
     environments !== undefined &&
-    environmentsFeatures !== undefined;
+    environmentsFeatures !== undefined &&
+    environmentsFeatures.length > 0 &&
+    environmentsFeatures[0] !== undefined &&
+    environmentsFeatures[0].length > 0;
 
   return ready ? (
     <Fragment>
