@@ -39,11 +39,8 @@ const ProjectSettingsForm = ({ setError, saveProjectIds, ...props }: ProjectSett
   const [projects] = usePromise(
     async () => {
       try {
-        const loadedProjects = await readProjects({});
-        console.log("[DEBUG] Loaded projects:", loadedProjects);
-        return loadedProjects;
+        return await readProjects({});
       } catch (error) {
-        console.error("[ERROR] Failed to load projects:", error);
         // ignore 404 (no projects) as that is handled by the form
         if (
           !Object.prototype.hasOwnProperty.call(error, "code") ||
@@ -76,7 +73,6 @@ const ProjectSettingsForm = ({ setError, saveProjectIds, ...props }: ProjectSett
 
   const onProjectChange = (options: Array<{ value: string }> | null) => {
     const newProjectIds = options?.map((option) => option.value) ?? [];
-    console.log("[DEBUG] Project selection changed:", newProjectIds);
     setProjectIds(newProjectIds);
   };
 
@@ -84,14 +80,11 @@ const ProjectSettingsForm = ({ setError, saveProjectIds, ...props }: ProjectSett
   const [features] = usePromise(async () => {
     try {
       if (props.projectIds.length > 0) {
-        const loadedFeatures = await readFeatures({ projectIds: props.projectIds });
-        console.log("[DEBUG] Loaded features for projects:", props.projectIds, loadedFeatures);
-        return loadedFeatures;
+        return await readFeatures({ projectIds: props.projectIds });
       } else {
         return undefined;
       }
     } catch (error) {
-      console.error("[ERROR] Failed to load features:", error);
       // treat errors as "no features"
       console.error(error);
       return [];
@@ -103,7 +96,6 @@ const ProjectSettingsForm = ({ setError, saveProjectIds, ...props }: ProjectSett
   }
 
   const onSave = async () => {
-    console.log("[DEBUG] Saving project IDs:", projectIds);
     await saveProjectIds(projectIds);
   };
 
@@ -197,11 +189,9 @@ const ProjectSettingsPage = ({ setError }: WrappableComponentProps): JSX.Element
       ProjectSettingsForm;
       if (extension) {
         await writeProjectIds(extension, projectIds);
-        console.log("[DEBUG] Successfully wrote project IDs to Jira.");
         setProjectIds(projectIds);
       }
     } catch (error) {
-      console.error("[ERROR] Failed to write project IDs to Jira:", error);
       setError(error as Error);
     }
   };

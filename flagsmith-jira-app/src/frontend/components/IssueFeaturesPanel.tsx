@@ -147,7 +147,6 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         />
       )}
       <IssueFeatureTables
-        projectIds={projectIds}
         // environments/environmentsFeatures are assumed to be same length/order
         environments={environments}
         environmentsFeatures={environmentsFeatures}

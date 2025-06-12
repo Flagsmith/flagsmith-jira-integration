@@ -130,14 +130,12 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
 };
 
 type IssueFeatureTableProps = {
-  projectIds: string[];
   environments: Environment[]; // must be non-empty
   // list of same feature in the context of each environment
   environmentFeatures: Feature[];
 };
 
 const IssueFeatureTable = ({
-  projectIds,
   environments,
   environmentFeatures,
 }: IssueFeatureTableProps): JSX.Element => {
@@ -148,7 +146,7 @@ const IssueFeatureTable = ({
   const featureId = environmentFeatures[0]!.id;
   const featureName = environmentFeatures[0]!.name;
 
-  const projectUrl = `${FLAGSMITH_APP}/project/${projectIds[0]}`; // TODO
+  const projectUrl = `${FLAGSMITH_APP}/project/${environmentFeatures[0]?.project}`;
 
   /** Read feature state for each environment */
   const readFeatureState = useCallback(async (): Promise<FeatureState> => {
@@ -217,7 +215,6 @@ const IssueFeatureTable = ({
 };
 
 type IssueFeatureTablesProps = {
-  projectIds: string[];
   // environments/environmentsFeatures are assumed to be same length/order
   environments: Environment[];
   environmentsFeatures: Feature[][];
@@ -225,7 +222,6 @@ type IssueFeatureTablesProps = {
 };
 
 const IssueFeatureTables = ({
-  projectIds,
   environments,
   environmentsFeatures,
   issueFeatureIds,
@@ -245,11 +241,8 @@ const IssueFeatureTables = ({
   return (
     <Fragment>
       {issueFeatureIds.map((featureId) => {
-        console.log("[DEBUG] Processing featureId:", featureId);
-
         const baseFeature = features.find((f) => String(f.id) === featureId);
         if (!baseFeature) {
-          console.warn("[WARN] baseFeature not found for featureId:", featureId);
           return null;
         }
 
@@ -265,14 +258,7 @@ const IssueFeatureTables = ({
           }
         });
 
-        console.log(
-          `[DEBUG] FeatureId: ${featureId} — envFeaturesForThisFeature.length: ${envFeaturesForThisFeature.length}, matchingEnvironments.length: ${matchingEnvironments.length}`,
-        );
-
         if (envFeaturesForThisFeature.length === 0 || matchingEnvironments.length === 0) {
-          console.warn(
-            `[WARN] Skipping featureId ${featureId} — no matching features or environments`,
-          );
           return null;
         }
 
@@ -288,7 +274,6 @@ const IssueFeatureTables = ({
               </Text>
             </Box>
             <IssueFeatureTable
-              projectIds={projectIds}
               environments={matchingEnvironments}
               environmentFeatures={envFeaturesForThisFeature}
             />
