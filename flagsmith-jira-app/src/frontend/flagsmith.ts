@@ -26,9 +26,9 @@ export const readProjects: ReadProjects = async ({ organisationId }) =>
 export const readEnvironments: ReadEnvironments = async ({ projectId }) =>
   customInvoke("readEnvironments", { projectId });
 
-/** Read Flagsmith Features for stored API Key, given Project ID and optional Environment ID */
-export const readFeatures: ReadFeatures = async ({ projectId, environmentId }) =>
-  customInvoke("readFeatures", { projectId, environmentId });
+/** Read Flagsmith Features for stored API Key, given Project IDs and optional Environment ID */
+export const readFeatures: ReadFeatures = async ({ projectIds, environmentId }) =>
+  customInvoke("readFeatures", { projectIds, environmentId });
 
 /** Read Flagsmith Feature State for stored API Key and given Environment API Key and Feature Name */
 export const readEnvironmentFeatureState: ReadEnvironmentFeatureState = async ({

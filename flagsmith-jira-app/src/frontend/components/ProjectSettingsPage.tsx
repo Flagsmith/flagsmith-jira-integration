@@ -20,20 +20,24 @@ import { Fragment, useEffect, useId, useMemo, useState } from "react";
 
 import { ApiError, usePromise } from "../../common";
 import { readFeatures, readProjects } from "../flagsmith";
-import { readProjectId, writeProjectId } from "../jira";
+import { readProjectIds, writeProjectIds } from "../jira";
 import { WrappableComponentProps } from "./ErrorWrapper";
 
 type ProjectSettingsFormProps = WrappableComponentProps & {
-  projectId: string;
-  saveProjectId: (projectId: string) => Promise<void>;
+  savedProjectIds: string[];
+  saveProjectIds: (projectIds: string[]) => Promise<void>;
 };
 
-const ProjectSettingsForm = ({ setError, saveProjectId, ...props }: ProjectSettingsFormProps) => {
+const ProjectSettingsForm = ({
+  setError,
+  saveProjectIds,
+  savedProjectIds,
+}: ProjectSettingsFormProps) => {
   // set form state from props
-  const [projectId, setProjectId] = useState<string | null>(props.projectId);
+  const [projectIds, setProjectIds] = useState<string[]>(savedProjectIds);
   useEffect(() => {
-    setProjectId(props.projectId);
-  }, [props.projectId]);
+    setProjectIds(savedProjectIds);
+  }, [savedProjectIds]);
 
   // get projects from Flagsmith API
   const [projects] = usePromise(
@@ -55,16 +59,12 @@ const ProjectSettingsForm = ({ setError, saveProjectId, ...props }: ProjectSetti
     setError,
   );
 
-  const project = projects?.find((each) => String(each.id) === String(projectId));
-  const currentProject = projects?.find((each) => String(each.id) === String(props.projectId));
-
-  // update projectId when projects change
-  useEffect(() => {
-    if (projects && !project) {
-      // unlike organisation, don't default to first project, clear selection instead
-      void setProjectId(null);
-    }
-  }, [projects, project]);
+  const currentProjects = projects?.filter((each) => savedProjectIds.includes(String(each.id)));
+  const validProjectIds = new Set(projects?.map((project) => String(project.id)) ?? []);
+  const allSelectedValid = projectIds.every((id) => validProjectIds.has(id));
+  const hasChanges =
+    projectIds.length !== savedProjectIds.length ||
+    !projectIds.every((id) => savedProjectIds.includes(id));
 
   const projectInputId = useId();
   const projectOptions = useMemo(
@@ -75,13 +75,19 @@ const ProjectSettingsForm = ({ setError, saveProjectId, ...props }: ProjectSetti
       })),
     [projects],
   );
-  const projectValue = projectOptions?.find((option) => option.value === projectId) ?? null;
+
+  const projectValue = projectOptions?.filter((option) => projectIds.includes(option.value)) ?? [];
+
+  const onProjectChange = (options: Array<{ value: string }> | null) => {
+    const newProjectIds = options?.map((option) => option.value) ?? [];
+    setProjectIds(newProjectIds);
+  };
 
   // get features for current project from Flagsmith API
   const [features] = usePromise(async () => {
     try {
-      if (props.projectId) {
-        return await readFeatures({ projectId: props.projectId });
+      if (savedProjectIds.length > 0) {
+        return await readFeatures({ projectIds: savedProjectIds });
       } else {
         return undefined;
       }
@@ -90,67 +96,78 @@ const ProjectSettingsForm = ({ setError, saveProjectId, ...props }: ProjectSetti
       console.error(error);
       return [];
     }
-  }, [props.projectId]);
+  }, [savedProjectIds]);
 
   if (projects === undefined) {
     return <Spinner label="Loading projects" />;
   }
 
   const onSave = async () => {
-    await saveProjectId(projectId ?? "");
+    await saveProjectIds(projectIds);
   };
 
   const onClear = async () => {
     // clear saved state
-    await saveProjectId("");
+    await saveProjectIds([]);
     // clear unsaved state
-    setProjectId("");
+    setProjectIds([]);
   };
 
-  const connected = !!currentProject && features && features.length > 0;
+  const connected = !!currentProjects && features && features.length > 0;
 
   return (
     <Fragment>
       <Box xcss={{ marginBottom: "space.300" }}>
         <Inline space="space.050" alignBlock="center">
-          <Strong>Project:</Strong> {!!currentProject && <Text>{currentProject.name}</Text>}
-          {!currentProject && projects && projects.length > 0 && !connected && (
+          <Strong>Project(s):</Strong>
+          {(currentProjects?.length ?? 0) > 0 && (
+            <Text>{currentProjects!.map((project) => project.name).join(", ")}</Text>
+          )}
+          {currentProjects?.length === 0 && projects?.length > 0 && !connected && !hasChanges && (
             <Lozenge appearance="moved">Not connected</Lozenge>
           )}
-          {projects && projects.length === 0 && (
-            <Lozenge appearance="removed">No projects to connect</Lozenge>
-          )}
-          {!!currentProject && !!features && !connected && (
+          {projects?.length === 0 && <Lozenge appearance="removed">No projects to connect</Lozenge>}
+          {(currentProjects ?? []).length > 0 && !!features && !connected && !hasChanges && (
             <Lozenge appearance="removed">No features to connect</Lozenge>
           )}
-          {connected && <Lozenge appearance="success">Connected</Lozenge>}
+          {connected && !hasChanges && <Lozenge appearance="success">Connected</Lozenge>}
         </Inline>
       </Box>
       {!!projectOptions && (
         <Form onSubmit={Promise.resolve}>
           <FormSection>
             <Label labelFor={projectInputId}>
-              Project
+              Project(s)
               <RequiredAsterisk />
             </Label>
             <Select
               id={projectInputId}
               isRequired
+              isMulti
               options={projectOptions}
               value={projectValue}
-              onChange={(option) => setProjectId(option?.value ?? "")}
+              onChange={onProjectChange}
             />
-            <HelperMessage>Choose your Flagsmith project</HelperMessage>
+            <HelperMessage>Choose your Flagsmith project(s)</HelperMessage>
           </FormSection>
           <FormFooter>
             <ButtonGroup label="Form actions">
-              <Button onClick={onSave} appearance="primary" isDisabled={!project}>
+              <Button
+                onClick={onSave}
+                appearance="primary"
+                isDisabled={!projectIds.length || !allSelectedValid || !hasChanges}
+              >
                 Save
               </Button>
               <Button onClick={onClear}>Clear</Button>
             </ButtonGroup>
           </FormFooter>
         </Form>
+      )}
+      {!allSelectedValid && (
+        <HelperMessage>
+          Some selected projects are no longer available. Please update your selection.
+        </HelperMessage>
       )}
     </Fragment>
   );
@@ -161,33 +178,38 @@ const ProjectSettingsPage = ({ setError }: WrappableComponentProps): JSX.Element
   const context = useProductContext();
   const extension = context?.extension;
   // get Flagsmith project ID from Jira project
-  const [projectId, setProjectId] = usePromise(
+  const [projectIds, setProjectIds] = usePromise(
     async () => {
       if (extension) {
-        return await readProjectId(extension);
+        return await readProjectIds(extension);
       }
-      return undefined;
+      return [];
     },
     [extension],
     setError,
   );
 
   /** Write Project ID to Jira project and update form state */
-  const saveProjectId = async (projectId: string) => {
+  const saveProjectIds = async (projectIds: string[]) => {
     try {
+      ProjectSettingsForm;
       if (extension) {
-        await writeProjectId(extension, projectId);
-        setProjectId(projectId);
+        await writeProjectIds(extension, projectIds);
+        setProjectIds(projectIds);
       }
     } catch (error) {
       setError(error as Error);
     }
   };
 
-  const ready = extension !== undefined && projectId !== undefined;
+  const ready = extension !== undefined && projectIds !== undefined;
 
   return ready ? (
-    <ProjectSettingsForm setError={setError} projectId={projectId} saveProjectId={saveProjectId} />
+    <ProjectSettingsForm
+      setError={setError}
+      savedProjectIds={projectIds}
+      saveProjectIds={saveProjectIds}
+    />
   ) : (
     <Spinner label="Loading configuration" />
   );

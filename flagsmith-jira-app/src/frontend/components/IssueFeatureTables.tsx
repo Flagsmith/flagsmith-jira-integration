@@ -13,7 +13,7 @@ import {
 } from "@forge/react";
 import { Fragment, useCallback, useState } from "react";
 
-import { usePromise } from "../../common";
+import { FLAGSMITH_APP, usePromise } from "../../common";
 import {
   Environment,
   EnvironmentFeatureState,
@@ -130,14 +130,12 @@ const makeRows = (projectUrl: string, state: FeatureState) => {
 };
 
 type IssueFeatureTableProps = {
-  projectUrl: string;
   environments: Environment[]; // must be non-empty
   // list of same feature in the context of each environment
   environmentFeatures: Feature[];
 };
 
 const IssueFeatureTable = ({
-  projectUrl,
   environments,
   environmentFeatures,
 }: IssueFeatureTableProps): JSX.Element => {
@@ -148,30 +146,64 @@ const IssueFeatureTable = ({
   const featureId = environmentFeatures[0]!.id;
   const featureName = environmentFeatures[0]!.name;
 
+  const projectUrl = `${FLAGSMITH_APP}/project/${environmentFeatures[0]?.project}`;
+
   /** Read feature state for each environment */
-  const readFeatureState = useCallback(
-    async (): Promise<FeatureState> => ({
-      featureId,
-      environments: await Promise.all(
-        environments.map(async (environment) => ({
-          ...(await readEnvironmentFeatureState({
+  const readFeatureState = useCallback(async (): Promise<FeatureState> => {
+    const featureProjectId = environmentFeatures[0]?.project;
+
+    const matchingEnvs = environments.filter(
+      (env) => String(env.project) === String(featureProjectId),
+    );
+
+    const environmentFeatureStates = await Promise.all(
+      matchingEnvs.map(async (environment) => {
+        try {
+          const state = await readEnvironmentFeatureState({
             envApiKey: String(environment.api_key),
             featureName,
-          })),
-          name: environment.name,
-          api_key: String(environment.api_key),
-        })),
-      ),
-      counts: environmentFeatures.map((feature) => ({
+          });
+
+          return {
+            ...state,
+            name: environment.name,
+            api_key: String(environment.api_key),
+          };
+        } catch (err) {
+          return null;
+        }
+      }),
+    );
+
+    const validStates = environmentFeatureStates.filter(Boolean);
+
+    const relevantFeatures = environmentFeatures.filter(
+      (f) => String(f.project) === String(featureProjectId),
+    );
+
+    return {
+      featureId,
+      environments: validStates as EnvironmentFeatureState[],
+      counts: relevantFeatures.map((feature) => ({
         variations: feature.multivariate_options.length,
         segments: feature.num_segment_overrides ?? 0,
         identities: feature.num_identity_overrides ?? 0,
       })),
-    }),
-    [environments, environmentFeatures],
-  );
+    };
+  }, [environments, environmentFeatures]);
+
   const [state] = usePromise(
-    async () => (error === undefined ? readFeatureState() : undefined),
+    async () => {
+      if (error === undefined) {
+        try {
+          return await readFeatureState();
+        } catch (err) {
+          console.error("[ERROR] Failed to read feature state:", err);
+          throw err;
+        }
+      }
+      return undefined;
+    },
     [error, readFeatureState],
     setError,
   );
@@ -197,7 +229,6 @@ const IssueFeatureTable = ({
 };
 
 type IssueFeatureTablesProps = {
-  projectUrl: string;
   // environments/environmentsFeatures are assumed to be same length/order
   environments: Environment[];
   environmentsFeatures: Feature[][];
@@ -205,7 +236,6 @@ type IssueFeatureTablesProps = {
 };
 
 const IssueFeatureTables = ({
-  projectUrl,
   environments,
   environmentsFeatures,
   issueFeatureIds,
@@ -230,12 +260,21 @@ const IssueFeatureTables = ({
           return null;
         }
 
-        const envFeaturesForThisFeature = environmentsFeatures
-          .map((envFeatures) => {
-            const matchingFeature = envFeatures.find((f) => String(f.id) === featureId);
-            return matchingFeature;
-          })
-          .filter(Boolean) as Feature[];
+        const envFeaturesForThisFeature: Feature[] = [];
+        const matchingEnvironments: Environment[] = [];
+
+        environmentsFeatures.forEach((envFeatures, index) => {
+          const matchingFeature = envFeatures.find((f) => String(f.id) === featureId);
+          const environment = environments[index];
+          if (matchingFeature && environment !== undefined) {
+            envFeaturesForThisFeature.push(matchingFeature);
+            matchingEnvironments.push(environment);
+          }
+        });
+
+        if (envFeaturesForThisFeature.length === 0 || matchingEnvironments.length === 0) {
+          return null;
+        }
 
         return (
           <Fragment key={featureId}>
@@ -249,8 +288,7 @@ const IssueFeatureTables = ({
               </Text>
             </Box>
             <IssueFeatureTable
-              projectUrl={projectUrl}
-              environments={environments}
+              environments={matchingEnvironments}
               environmentFeatures={envFeaturesForThisFeature}
             />
           </Fragment>
