@@ -24,16 +24,20 @@ import { readProjectIds, writeProjectIds } from "../jira";
 import { WrappableComponentProps } from "./ErrorWrapper";
 
 type ProjectSettingsFormProps = WrappableComponentProps & {
-  projectIds: string[];
+  savedProjectIds: string[];
   saveProjectIds: (projectIds: string[]) => Promise<void>;
 };
 
-const ProjectSettingsForm = ({ setError, saveProjectIds, ...props }: ProjectSettingsFormProps) => {
+const ProjectSettingsForm = ({
+  setError,
+  saveProjectIds,
+  savedProjectIds,
+}: ProjectSettingsFormProps) => {
   // set form state from props
-  const [projectIds, setProjectIds] = useState<string[]>(props.projectIds);
+  const [projectIds, setProjectIds] = useState<string[]>(savedProjectIds);
   useEffect(() => {
-    setProjectIds(props.projectIds);
-  }, [props.projectIds]);
+    setProjectIds(savedProjectIds);
+  }, [savedProjectIds]);
 
   // get projects from Flagsmith API
   const [projects] = usePromise(
@@ -55,9 +59,12 @@ const ProjectSettingsForm = ({ setError, saveProjectIds, ...props }: ProjectSett
     setError,
   );
 
-  const currentProjects = projects?.filter((each) => projectIds.includes(String(each.id)));
+  const currentProjects = projects?.filter((each) => savedProjectIds.includes(String(each.id)));
   const validProjectIds = new Set(projects?.map((project) => String(project.id)) ?? []);
   const allSelectedValid = projectIds.every((id) => validProjectIds.has(id));
+  const hasChanges =
+    projectIds.length !== savedProjectIds.length ||
+    !projectIds.every((id) => savedProjectIds.includes(id));
 
   const projectInputId = useId();
   const projectOptions = useMemo(
@@ -79,8 +86,8 @@ const ProjectSettingsForm = ({ setError, saveProjectIds, ...props }: ProjectSett
   // get features for current project from Flagsmith API
   const [features] = usePromise(async () => {
     try {
-      if (props.projectIds.length > 0) {
-        return await readFeatures({ projectIds: props.projectIds });
+      if (savedProjectIds.length > 0) {
+        return await readFeatures({ projectIds: savedProjectIds });
       } else {
         return undefined;
       }
@@ -89,7 +96,7 @@ const ProjectSettingsForm = ({ setError, saveProjectIds, ...props }: ProjectSett
       console.error(error);
       return [];
     }
-  }, [props.projectIds]);
+  }, [savedProjectIds]);
 
   if (projects === undefined) {
     return <Spinner label="Loading projects" />;
@@ -113,18 +120,17 @@ const ProjectSettingsForm = ({ setError, saveProjectIds, ...props }: ProjectSett
       <Box xcss={{ marginBottom: "space.300" }}>
         <Inline space="space.050" alignBlock="center">
           <Strong>Project(s):</Strong>
-          {/* Need to put this in a list */}
           {(currentProjects?.length ?? 0) > 0 && (
             <Text>{currentProjects!.map((project) => project.name).join(", ")}</Text>
           )}
-          {currentProjects?.length === 0 && projects?.length > 0 && !connected && (
+          {currentProjects?.length === 0 && projects?.length > 0 && !connected && !hasChanges && (
             <Lozenge appearance="moved">Not connected</Lozenge>
           )}
           {projects?.length === 0 && <Lozenge appearance="removed">No projects to connect</Lozenge>}
-          {(currentProjects ?? []).length > 0 && !!features && !connected && (
+          {(currentProjects ?? []).length > 0 && !!features && !connected && !hasChanges && (
             <Lozenge appearance="removed">No features to connect</Lozenge>
           )}
-          {connected && <Lozenge appearance="success">Connected</Lozenge>}
+          {connected && !hasChanges && <Lozenge appearance="success">Connected</Lozenge>}
         </Inline>
       </Box>
       {!!projectOptions && (
@@ -149,7 +155,7 @@ const ProjectSettingsForm = ({ setError, saveProjectIds, ...props }: ProjectSett
               <Button
                 onClick={onSave}
                 appearance="primary"
-                isDisabled={!projectIds.length || !allSelectedValid}
+                isDisabled={!projectIds.length || !allSelectedValid || !hasChanges}
               >
                 Save
               </Button>
@@ -201,7 +207,7 @@ const ProjectSettingsPage = ({ setError }: WrappableComponentProps): JSX.Element
   return ready ? (
     <ProjectSettingsForm
       setError={setError}
-      projectIds={projectIds}
+      savedProjectIds={projectIds}
       saveProjectIds={saveProjectIds}
     />
   ) : (
