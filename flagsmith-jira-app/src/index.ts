@@ -100,7 +100,6 @@ resolver
       if (!projectIds || projectIds.length === 0) return false;
       const availableProjects = await readProjects({});
       const availableProjectIds = new Set(availableProjects.map((project) => String(project.id)));
-      // Ensure *every* projectId is valid
       return projectIds.every((id: string) => availableProjectIds.has(id));
     })
       .then(() => readFeatures({ projectIds, environmentId }))

@@ -100,7 +100,6 @@ export const readProjectIds = async (extension: ExtensionData): Promise<string[]
     return stored; // Already an array, perfect
   }
 
-  // Optional: runtime safeguard
   throw new Error(`Unexpected type for projectIds: ${typeof stored}`);
 };
 

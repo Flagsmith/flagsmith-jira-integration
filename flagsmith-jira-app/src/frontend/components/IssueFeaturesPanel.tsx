@@ -60,7 +60,6 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   }, [extension?.isNewToIssue, canEdit]);
 
   // get environments from Flagsmith API
-  // TODO: Do we need to handle multiple environments? I think probably not
   const [environments] = usePromise(
     async () => {
       try {
