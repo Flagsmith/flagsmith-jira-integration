@@ -196,6 +196,39 @@ const IssueFeatureTable = ({
   return <DynamicTable head={head} rows={makeRows(projectUrl, state)} />;
 };
 
+type FeatureTableData = {
+  featureId: string;
+  baseFeature: Feature | undefined;
+  environmentFeatures: Feature[];
+};
+
+const buildFeatureTableData = ({
+  issueFeatureIds,
+  features,
+  environmentsFeatures,
+}: {
+  issueFeatureIds: string[];
+  features: Feature[];
+  environmentsFeatures: Feature[][];
+}): FeatureTableData[] => {
+  return issueFeatureIds.map((featureId) => {
+    const baseFeature = features.find((f) => String(f.id) === featureId);
+
+    const envFeaturesForThisFeature = environmentsFeatures
+      .map((envFeatures) => {
+        const matchingFeature = envFeatures.find((f) => String(f.id) === featureId);
+        return matchingFeature;
+      })
+      .filter(Boolean) as Feature[];
+
+    return {
+      featureId,
+      baseFeature,
+      environmentFeatures: envFeaturesForThisFeature,
+    };
+  });
+};
+
 type IssueFeatureTablesProps = {
   projectUrl: string;
   // environments/environmentsFeatures are assumed to be same length/order
@@ -222,31 +255,37 @@ const IssueFeatureTables = ({
   // (id/name/description are the same across environments)
   const features = environmentsFeatures[0];
 
+  const featureTableData = buildFeatureTableData({
+    issueFeatureIds,
+    features,
+    environmentsFeatures,
+  });
+
   return (
     <Fragment>
-      {features
-        .filter((feature) => issueFeatureIds.includes(String(feature.id)))
-        .map((feature, index) => (
-          <Fragment key={feature.id}>
+      {featureTableData.map(({ featureId, baseFeature, environmentFeatures }) => {
+        if (!baseFeature) {
+          return null;
+        }
+        return (
+          <Fragment key={featureId}>
             <Box xcss={{ marginTop: "space.300", marginBottom: "space.100" }}>
               <Text>
                 <Strong>
-                  {feature.name}
-                  {feature.description ? ": " : ""}
+                  {baseFeature.name}
+                  {baseFeature.description ? ": " : ""}
                 </Strong>
-                {feature.description}
+                {baseFeature.description}
               </Text>
             </Box>
             <IssueFeatureTable
               projectUrl={projectUrl}
               environments={environments}
-              // retrieve list of same feature from each environment
-              environmentFeatures={environmentsFeatures.map(
-                (features) => features[index] as Feature,
-              )}
+              environmentFeatures={environmentFeatures}
             />
           </Fragment>
-        ))}
+        );
+      })}
     </Fragment>
   );
 };
