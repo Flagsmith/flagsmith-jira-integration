@@ -93,7 +93,7 @@ resolver
       .then(() => readEnvironments({ projectId }))
       .catch(returnError),
   )
-  .define("readFeatures", async ({ payload: { projectIds, environmentId } }) =>
+  .define("readFeatures", async ({ payload: { projectIds, environmentId, projects } }) =>
     // this API may be called for projects in the current organisation
     // TODO later: consider caching or refactoring to reduce calls to readProjects (or use RBAC key)
     checkPermission(async () => {
@@ -102,7 +102,7 @@ resolver
       const availableProjectIds = new Set(availableProjects.map((project) => String(project.id)));
       return projectIds.every((id: string) => availableProjectIds.has(id));
     })
-      .then(() => readFeatures({ projectIds, environmentId }))
+      .then(() => readFeatures({ projectIds, environmentId, projects }))
       .catch(returnError),
   )
   .define("readEnvironmentFeatureState", async ({ payload: { envApiKey, featureName } }) =>

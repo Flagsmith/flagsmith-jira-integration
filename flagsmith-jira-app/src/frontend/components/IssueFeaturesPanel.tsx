@@ -3,12 +3,13 @@ import { Fragment, useEffect, useState } from "react";
 
 import { ApiError, usePromise } from "../../common";
 import { canEditIssue } from "../auth";
-import { readEnvironments, readFeatures } from "../flagsmith";
+import { readEnvironments, readFeatures, readProjects } from "../flagsmith";
 import { readFeatureIds, readProjectIds, writeFeatureIds } from "../jira";
 
 import { WrappableComponentProps } from "./ErrorWrapper";
 import IssueFeaturesForm from "./IssueFeaturesForm";
 import IssueFeatureTables from "./IssueFeatureTables";
+import { readOrganisationId } from "../storage";
 
 const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element => {
   // get project context extension
@@ -24,6 +25,17 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
       return undefined;
     },
     [extension],
+    setError,
+  );
+
+  // get Flagsmith projects
+  const [projects] = usePromise(
+    async () => {
+      if (!projectIds || projectIds.length === 0) return undefined;
+      const orgId = await readOrganisationId();
+      return await readProjects({ organisationId: orgId });
+    },
+    [projectIds?.join(",")],
     setError,
   );
 
@@ -88,10 +100,17 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   const [environmentsFeatures] = usePromise(
     async () => {
       try {
-        if (projectIds && projectIds.length > 0 && environments !== undefined) {
+        if (
+          projectIds &&
+          projectIds.length > 0 &&
+          environments !== undefined &&
+          environments.length > 0 &&
+          projects !== undefined &&
+          projects.length > 0
+        ) {
           return await Promise.all(
             environments.map((environment) =>
-              readFeatures({ projectIds, environmentId: String(environment.id) }),
+              readFeatures({ projectIds, environmentId: String(environment.id), projects }),
             ),
           );
         } else {
@@ -108,7 +127,7 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         return [];
       }
     },
-    [projectIds, environments],
+    [projectIds, environments, projects],
     setError,
   );
 

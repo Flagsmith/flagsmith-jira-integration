@@ -161,10 +161,15 @@ export const readEnvironments: ReadEnvironments = async ({ projectId }) => {
 export type ReadFeatures = (args: {
   projectIds?: string[];
   environmentId?: string;
+  projects?: Project[];
 }) => Promise<Feature[]>;
 
 /** Read Flagsmith Features for stored API Key, given Project ID and optional Environment ID */
-export const readFeatures: ReadFeatures = async ({ projectIds, environmentId }) => {
+export const readFeatures: ReadFeatures = async ({
+  projectIds,
+  environmentId,
+  projects: preFetchedProjects,
+}) => {
   const apiKey = await readApiKey();
   checkApiKey(apiKey);
 
@@ -174,7 +179,7 @@ export const readFeatures: ReadFeatures = async ({ projectIds, environmentId }) 
 
   const allFeatures: Feature[] = [];
   const organisationId = await readOrganisationId();
-  const projects = await readProjects({ organisationId });
+  const projects = preFetchedProjects ?? (await readProjects({ organisationId }));
 
   for (const projectId of projectIds) {
     const params = new URLSearchParams({ is_archived: "false" });
