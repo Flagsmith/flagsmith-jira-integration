@@ -1,14 +1,15 @@
 import { Spinner, useProductContext } from "@forge/react";
 import { Fragment, useEffect, useState } from "react";
 
-import { ApiError, FLAGSMITH_APP, usePromise } from "../../common";
+import { ApiError, usePromise } from "../../common";
 import { canEditIssue } from "../auth";
-import { readEnvironments, readFeatures } from "../flagsmith";
-import { readFeatureIds, readProjectId, writeFeatureIds } from "../jira";
+import { readEnvironments, readFeatures, readProjects } from "../flagsmith";
+import { readFeatureIds, readProjectIds, writeFeatureIds } from "../jira";
 
 import { WrappableComponentProps } from "./ErrorWrapper";
 import IssueFeaturesForm from "./IssueFeaturesForm";
 import IssueFeatureTables from "./IssueFeatureTables";
+import { readOrganisationId } from "../storage";
 
 const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element => {
   // get project context extension
@@ -16,14 +17,25 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   const extension = context?.extension;
 
   // get Flagsmith project ID from Jira project
-  const [projectId] = usePromise(
+  const [projectIds] = usePromise(
     async () => {
       if (extension) {
-        return await readProjectId(extension);
+        return await readProjectIds(extension);
       }
       return undefined;
     },
     [extension],
+    setError,
+  );
+
+  // get Flagsmith projects
+  const [projects] = usePromise(
+    async () => {
+      if (!projectIds || projectIds.length === 0) return undefined;
+      const orgId = await readOrganisationId();
+      return await readProjects({ organisationId: orgId });
+    },
+    [projectIds?.join(",")],
     setError,
   );
 
@@ -63,13 +75,14 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   const [environments] = usePromise(
     async () => {
       try {
-        if (projectId !== undefined) {
-          return await readEnvironments({ projectId });
-        } else {
-          return undefined;
+        if (projectIds && projectIds.length > 0) {
+          const all = await Promise.all(
+            projectIds.map((projectId) => readEnvironments({ projectId })),
+          );
+          return all.flat(); // Combine all environments into one flat array
         }
+        return [];
       } catch (error) {
-        // ignore 404 (no environments) as that is handled by the form
         if (
           !Object.prototype.hasOwnProperty.call(error, "code") ||
           ![404].includes((error as ApiError).code)
@@ -79,7 +92,7 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         return [];
       }
     },
-    [projectId],
+    [projectIds],
     setError,
   );
 
@@ -87,10 +100,17 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   const [environmentsFeatures] = usePromise(
     async () => {
       try {
-        if (projectId !== undefined && environments !== undefined) {
+        if (
+          projectIds &&
+          projectIds.length > 0 &&
+          environments !== undefined &&
+          environments.length > 0 &&
+          projects !== undefined &&
+          projects.length > 0
+        ) {
           return await Promise.all(
             environments.map((environment) =>
-              readFeatures({ projectId, environmentId: String(environment.id) }),
+              readFeatures({ projectIds, environmentId: String(environment.id), projects }),
             ),
           );
         } else {
@@ -107,7 +127,7 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         return [];
       }
     },
-    [projectId, environments],
+    [projectIds, environments, projects],
     setError,
   );
 
@@ -123,14 +143,16 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
     }
   };
 
-  const projectUrl = `${FLAGSMITH_APP}/project/${projectId}`;
-
   const ready =
     extension !== undefined &&
-    projectId !== undefined &&
+    projectIds !== undefined &&
+    projectIds.length > 0 &&
     featureIds !== undefined &&
     environments !== undefined &&
-    environmentsFeatures !== undefined;
+    environmentsFeatures !== undefined &&
+    environmentsFeatures.length > 0 &&
+    environmentsFeatures[0] !== undefined &&
+    environmentsFeatures[0].length > 0;
 
   return ready ? (
     <Fragment>
@@ -147,7 +169,6 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         />
       )}
       <IssueFeatureTables
-        projectUrl={projectUrl}
         // environments/environmentsFeatures are assumed to be same length/order
         environments={environments}
         environmentsFeatures={environmentsFeatures}
