@@ -174,6 +174,10 @@ export const readFeatures: ReadFeatures = async ({ projectIds, environmentId }) 
 
   const allFeatures: Feature[] = [];
   const organisationId = await readOrganisationId();
+
+  // TODO: consider ways to avoid multiple API calls
+  // relates to https://github.com/Flagsmith/flagsmith-jira-integration/issues/22
+  // When an RBAC API key is in use, there is no need for the backend to retrieve projects for filtering as any API call to a project ID that isn't permitted will cause an auth error.
   const projects = await readProjects({ organisationId });
 
   for (const projectId of projectIds) {

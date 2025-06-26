@@ -168,6 +168,14 @@ const IssueFeatureTable = ({
             api_key: String(environment.api_key),
           };
         } catch (err) {
+          console.warn(
+            `Failed to read feature state for environment "${environment.name}" (${environment.id})`,
+            {
+              featureName,
+              apiKey: environment.api_key,
+              error: err instanceof Error ? err.message : String(err),
+            },
+          );
           return null;
         }
       }),
