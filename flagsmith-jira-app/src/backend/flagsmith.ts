@@ -17,7 +17,7 @@ type PaginatedModels<TModel extends Model> = {
 
 export type Organisation = Model;
 export type Project = Model;
-export type Environment = Model & { api_key: string };
+export type Environment = Model & { api_key: string; project: number };
 
 export type Feature = Model & {
   id: number | string;
@@ -27,6 +27,8 @@ export type Feature = Model & {
   multivariate_options: unknown[];
   num_segment_overrides: number | null;
   num_identity_overrides: number | null;
+  project: number;
+  project_name: string;
 };
 
 export type EnvironmentFeatureState = Model & {
@@ -157,22 +159,63 @@ export const readEnvironments: ReadEnvironments = async ({ projectId }) => {
 };
 
 export type ReadFeatures = (args: {
-  projectId?: string;
+  projectIds?: string[];
   environmentId?: string;
 }) => Promise<Feature[]>;
 
 /** Read Flagsmith Features for stored API Key, given Project ID and optional Environment ID */
-export const readFeatures: ReadFeatures = async ({ projectId, environmentId }) => {
+export const readFeatures: ReadFeatures = async ({ projectIds, environmentId }) => {
   const apiKey = await readApiKey();
   checkApiKey(apiKey);
-  if (!projectId) throw new ApiError("Flagsmith project not connected", 400);
-  const params = new URLSearchParams({ is_archived: "false" });
-  if (environmentId) params.set("environment", environmentId);
-  const path = route`/projects/${projectId}/features/?${params}`;
-  const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Feature>;
-  const results = await unpaginate(apiKey, data);
-  if (results.length === 0) throw new ApiError("Flagsmith project has no features", 404);
-  return results;
+
+  if (!projectIds || projectIds.length === 0) {
+    throw new ApiError("Flagsmith project not connected", 400);
+  }
+
+  const allFeatures: Feature[] = [];
+  const organisationId = await readOrganisationId();
+
+  // TODO: consider ways to avoid multiple API calls
+  // relates to https://github.com/Flagsmith/flagsmith-jira-integration/issues/22
+  // When an RBAC API key is in use, there is no need for the backend to retrieve projects for filtering as any API call to a project ID that isn't permitted will cause an auth error.
+  const projects = await readProjects({ organisationId });
+
+  for (const projectId of projectIds) {
+    const params = new URLSearchParams({ is_archived: "false" });
+    if (environmentId) params.set("environment", environmentId);
+
+    try {
+      const project = projects.find((p) => String(p.id) === String(projectId));
+
+      if (!project) {
+        throw new ApiError(`Flagsmith project ${projectId} not found`, 404);
+      }
+
+      const path = route`/projects/${projectId}/features/?${params}`;
+      const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<Feature>;
+      const results = await unpaginate(apiKey, data);
+
+      const enrichedFeatures = results.map((feature) => ({
+        ...feature,
+        project_name: project.name,
+      }));
+
+      allFeatures.push(...enrichedFeatures);
+    } catch (error) {
+      // If a specific project has no features, we can log it but continue with others
+      if (error instanceof ApiError && error.code === 404) {
+        console.warn(`Flagsmith project ${projectId} has no features`);
+      } else {
+        throw error; // rethrow unexpected errors
+      }
+    }
+  }
+
+  if (allFeatures.length === 0) {
+    throw new ApiError("Flagsmith projects have no features", 404);
+  }
+
+  return allFeatures;
 };
 
 export type ReadEnvironmentFeatureState = (args: {
@@ -188,6 +231,7 @@ export const readEnvironmentFeatureState: ReadEnvironmentFeatureState = async ({
   const apiKey = await readApiKey();
   checkApiKey(apiKey);
   if (!envApiKey) throw new ApiError("Flagsmith environment not connected", 400);
+
   const path = route`/environments/${envApiKey}/featurestates/?feature_name=${featureName}`;
   const data = (await flagsmithApi(apiKey, path)) as PaginatedModels<EnvironmentFeatureState>;
   const results = await unpaginate(apiKey, data);
