@@ -17,7 +17,7 @@ jobs:
       run:
         working-directory: flagsmith-jira-app
     env:
-      FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }}
+      FORGE_EMAIL: ${{ vars.FORGE_EMAIL }}
       FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
     steps:
       - uses: actions/checkout@v7
