@@ -1,0 +1,13 @@
+name: Deploy to production
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: production
+    secrets: inherit
