@@ -32,7 +32,7 @@ jobs:
         run: npm install -g npm@11
 
       - name: Install Forge CLI
-        run: npm install -g @forge/cli@11
+        run: npm install -g @forge/cli@12
 
       - name: Opt out of Forge usage analytics
         run: forge settings set usage-analytics false
