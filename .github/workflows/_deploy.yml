@@ -1,0 +1,44 @@
+name: Deploy Forge app
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub environment and Forge environment to deploy to.
+        type: string
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    defaults:
+      run:
+        working-directory: flagsmith-jira-app
+    env:
+      FORGE_EMAIL: ${{ vars.FORGE_EMAIL }}
+      FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: flagsmith-jira-app/package-lock.json
+
+      - name: Upgrade npm
+        run: npm install -g npm@11
+
+      - name: Install Forge CLI
+        run: npm install -g @forge/cli@12
+
+      - name: Opt out of Forge usage analytics
+        run: forge settings set usage-analytics false
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Deploy
+        run: forge deploy --environment ${{ inputs.environment }} --non-interactive
