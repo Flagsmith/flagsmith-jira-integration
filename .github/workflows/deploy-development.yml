@@ -6,7 +6,36 @@ on:
       - main
 
 jobs:
+  authorize:
+    name: Check actor has repo write access
+    runs-on: ubuntu-latest
+    outputs:
+      authorized: ${{ steps.check.outputs.authorized }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          if [[ "$ACTOR" == *"[bot]"* ]]; then
+            echo "authorized=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping deploy: $ACTOR is a bot."
+            exit 0
+          fi
+          permission=$(gh api "/repos/${{ github.repository }}/collaborators/$ACTOR/permission" --jq '.permission' 2>/dev/null) || permission=none
+          case "$permission" in
+            admin | maintain | write)
+              echo "authorized=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "authorized=false" >> "$GITHUB_OUTPUT"
+              echo "::notice::Skipping deploy: $ACTOR has permission '$permission'."
+              ;;
+          esac
+
   deploy:
+    needs: authorize
+    if: needs.authorize.outputs.authorized == 'true'
     uses: ./.github/workflows/_deploy.yml
     with:
       environment: development
