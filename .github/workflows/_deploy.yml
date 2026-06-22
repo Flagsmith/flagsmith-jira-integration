@@ -34,6 +34,9 @@ jobs:
       - name: Install Forge CLI
         run: npm install -g @forge/cli@11
 
+      - name: Opt out of Forge usage analytics
+        run: forge settings set usage-analytics false
+
       - name: Install app dependencies
         run: npm ci
 
