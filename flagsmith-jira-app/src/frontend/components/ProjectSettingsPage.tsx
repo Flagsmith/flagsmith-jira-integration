@@ -192,7 +192,6 @@ const ProjectSettingsPage = ({ setError }: WrappableComponentProps): JSX.Element
   /** Write Project ID to Jira project and update form state */
   const saveProjectIds = async (projectIds: string[]) => {
     try {
-      ProjectSettingsForm;
       if (extension) {
         await writeProjectIds(extension, projectIds);
         setProjectIds(projectIds);
