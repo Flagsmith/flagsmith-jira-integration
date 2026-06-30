@@ -1,6 +1,6 @@
 {
   "name": "flagsmith-jira-app",
-  "version": "1.1.9",
+  "version": "1.1.10",
   "main": "index.ts",
   "private": true,
   "scripts": {

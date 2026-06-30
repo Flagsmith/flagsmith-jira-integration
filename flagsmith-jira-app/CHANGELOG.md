@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.10](https://github.com/Flagsmith/flagsmith-jira-integration/compare/v1.1.9...v1.1.10) (2026-06-30)
+
+
+### Dependency Updates
+
+* upgrade eslint to v9 to drop vulnerable minimatch 3.1.2 ([#63](https://github.com/Flagsmith/flagsmith-jira-integration/issues/63)) ([c47131c](https://github.com/Flagsmith/flagsmith-jira-integration/commit/c47131c033e8fdd43aef840ac97fb9560eff463a))
+
 ## [1.1.9](https://github.com/Flagsmith/flagsmith-jira-integration/compare/v1.1.8...v1.1.9) (2026-06-30)
 
 
