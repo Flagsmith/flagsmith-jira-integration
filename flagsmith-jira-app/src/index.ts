@@ -1,6 +1,7 @@
 import Resolver from "@forge/resolver";
 
 import { canEditIssue, canAdministrate, canAdministrateProject } from "./backend/auth";
+import { readConfig } from "./backend/config";
 import {
   readEnvironmentFeatureState,
   readEnvironments,
@@ -30,6 +31,8 @@ const returnError = (error: Error): ErrorPayload => ({
 const resolver = new Resolver();
 
 resolver.define("canEditIssue", async ({ payload }) => canEditIssue(payload).catch(returnError));
+
+resolver.define("readConfig", async () => readConfig().catch(returnError));
 
 const checkPermission = async (hasPermission: () => Promise<boolean>) => {
   if (!(await hasPermission())) throw new ApiError("Forbidden", 403);

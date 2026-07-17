@@ -13,7 +13,8 @@ import {
 } from "@forge/react";
 import { Fragment, useCallback, useState } from "react";
 
-import { FLAGSMITH_APP, usePromise } from "../../common";
+import { usePromise } from "../../common";
+import { readConfig } from "../config";
 import {
   Environment,
   EnvironmentFeatureState,
@@ -133,11 +134,13 @@ type IssueFeatureTableProps = {
   environments: Environment[]; // must be non-empty
   // list of same feature in the context of each environment
   environmentFeatures: Feature[];
+  flagsmithApp: string;
 };
 
 const IssueFeatureTable = ({
   environments,
   environmentFeatures,
+  flagsmithApp,
 }: IssueFeatureTableProps): JSX.Element => {
   // catch API errors per table rather than cause whole component to fail
   const [error, setError] = useState<Error>();
@@ -146,7 +149,7 @@ const IssueFeatureTable = ({
   const featureId = environmentFeatures[0]!.id;
   const featureName = environmentFeatures[0]!.name;
   const featureProjectId = environmentFeatures[0]!.project;
-  const projectUrl = `${FLAGSMITH_APP}/project/${featureProjectId}`;
+  const projectUrl = `${flagsmithApp}/project/${featureProjectId}`;
 
   /** Read feature state for each environment */
   const readFeatureState = useCallback(async (): Promise<FeatureState> => {
@@ -294,12 +297,18 @@ const IssueFeatureTables = ({
   environmentsFeatures,
   issueFeatureIds,
 }: IssueFeatureTablesProps): JSX.Element => {
+  const [config] = usePromise(readConfig, []);
+
   if (
     environmentsFeatures.length === 0 ||
     environmentsFeatures[0] === undefined ||
     issueFeatureIds.length === 0
   ) {
     return <Fragment />;
+  }
+
+  if (config === undefined) {
+    return <Spinner label="Loading feature flag state" />;
   }
 
   // iterate features from the first environment to get list of tables
@@ -329,6 +338,7 @@ const IssueFeatureTables = ({
             <IssueFeatureTable
               environments={matchingEnvironments}
               environmentFeatures={envFeaturesForThisFeature}
+              flagsmithApp={config.flagsmithApp}
             />
           </Fragment>
         ),

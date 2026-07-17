@@ -1,5 +1,5 @@
 app:
-  id: ari:cloud:ecosystem::app/9ea1f892-1356-44bd-9ac8-684abf3a5714
+  id: ari:cloud:ecosystem::app/${FORGE_APP_ID}
   runtime:
     name: nodejs22.x
 modules:
@@ -54,4 +54,10 @@ permissions:
   external:
     fetch:
       backend:
-        - api.flagsmith.com
+        - ${FLAGSMITH_BACKEND_HOST}
+environment:
+  variables:
+    - key: FORGE_APP_ID
+      default: 9ea1f892-1356-44bd-9ac8-684abf3a5714
+    - key: FLAGSMITH_BACKEND_HOST
+      default: api.flagsmith.com

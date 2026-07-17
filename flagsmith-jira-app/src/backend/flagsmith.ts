@@ -1,7 +1,9 @@
 import api, { APIResponse, Route, assumeTrustedRoute, route } from "@forge/api";
 
-import { ApiArgs, ApiError, FLAGSMITH_API_V1 } from "../common";
+import { ApiArgs, ApiError, DEFAULT_FLAGSMITH_API_V1 } from "../common";
 import { readApiKey, readOrganisationId } from "./storage";
+
+const FLAGSMITH_API_V1 = process.env.FLAGSMITH_API_V1 ?? DEFAULT_FLAGSMITH_API_V1;
 
 type Model = {
   id: number;
