@@ -44,20 +44,20 @@ jobs:
       # the shell at deploy time. Only override the SaaS defaults when provided.
       - name: Set manifest variables
         run: |
-          if [ -n "${{ vars.FORGE_APP_ID }}" ] && [ "${{ vars.FORGE_APP_ID }}" != "" ]; then
+          if [ -n "${{ vars.FORGE_APP_ID }}" ]; then
             echo "FORGE_APP_ID=${{ vars.FORGE_APP_ID }}" >> "$GITHUB_ENV"
           fi
-          if [ -n "${{ vars.FLAGSMITH_BACKEND_HOST }}" ] && [ "${{ vars.FLAGSMITH_BACKEND_HOST }}" != "" ]; then
+          if [ -n "${{ vars.FLAGSMITH_BACKEND_HOST }}" ]; then
             echo "FLAGSMITH_BACKEND_HOST=${{ vars.FLAGSMITH_BACKEND_HOST }}" >> "$GITHUB_ENV"
           fi
       # Runtime variables: stored by Forge and read via process.env in functions.
       # Only set them when provided; otherwise the code falls back to SaaS defaults.
       - name: Set runtime variables
         run: |
-          if [ -n "${{ vars.FLAGSMITH_API_V1 }}" ] && [ "${{ vars.FLAGSMITH_API_V1 }}" != "" ]; then
+          if [ -n "${{ vars.FLAGSMITH_API_V1 }}" ]; then
             forge variables set FLAGSMITH_API_V1 "${{ vars.FLAGSMITH_API_V1 }}" --environment ${{ inputs.environment }}
           fi
-          if [ -n "${{ vars.FLAGSMITH_APP }}" ] && [ "${{ vars.FLAGSMITH_APP }}" != "" ]; then
+          if [ -n "${{ vars.FLAGSMITH_APP }}" ]; then
             forge variables set FLAGSMITH_APP "${{ vars.FLAGSMITH_APP }}" --environment ${{ inputs.environment }}
           fi
 

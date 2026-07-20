@@ -9,5 +9,5 @@ export type ReadConfig = () => Promise<Config>;
 
 /** Read frontend-visible configuration from runtime environment variables */
 export const readConfig: ReadConfig = async () => ({
-  flagsmithApp: process.env.FLAGSMITH_APP ?? DEFAULT_FLAGSMITH_APP,
+  flagsmithApp: process.env.FLAGSMITH_APP || DEFAULT_FLAGSMITH_APP,
 });
