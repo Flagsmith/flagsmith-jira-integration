@@ -307,10 +307,6 @@ const IssueFeatureTables = ({
     return <Fragment />;
   }
 
-  if (config === undefined) {
-    return <Spinner label="Loading feature flag state" />;
-  }
-
   // iterate features from the first environment to get list of tables
   // (id/name/description are the same across environments)
   const features = environmentsFeatures[0];
