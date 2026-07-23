@@ -25,6 +25,13 @@ export class ApiError extends Error {
 
 export type ErrorPayload = { error: Error };
 
+/** Frontend-visible configuration passed back across the invoke bridge */
+export type Config = {
+  flagsmithApp: string;
+};
+
+export type ReadConfig = () => Promise<Config>;
+
 /** Use a promise safely i.e. ignore result if subsequently unmounted */
 export const usePromise = <T>(
   promise: () => Promise<T>,

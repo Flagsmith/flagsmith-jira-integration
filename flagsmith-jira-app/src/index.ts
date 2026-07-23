@@ -1,8 +1,8 @@
 import Resolver from "@forge/resolver";
 
 import { canEditIssue, canAdministrate, canAdministrateProject } from "./backend/auth";
-import { readConfig } from "./backend/config";
 import {
+  readConfig,
   readEnvironmentFeatureState,
   readEnvironments,
   readFeatures,

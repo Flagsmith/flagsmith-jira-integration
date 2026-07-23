@@ -14,7 +14,7 @@ import {
 import { Fragment, useCallback, useState } from "react";
 
 import { DEFAULT_FLAGSMITH_APP, usePromise } from "../../common";
-import { readConfig } from "../config";
+import { readConfig } from "../flagsmith";
 import {
   Environment,
   EnvironmentFeatureState,

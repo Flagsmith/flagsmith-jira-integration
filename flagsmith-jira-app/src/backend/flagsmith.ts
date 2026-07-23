@@ -1,6 +1,12 @@
 import api, { APIResponse, Route, assumeTrustedRoute, route } from "@forge/api";
 
-import { ApiArgs, ApiError, DEFAULT_FLAGSMITH_API_V1 } from "../common";
+import {
+  ApiArgs,
+  ApiError,
+  DEFAULT_FLAGSMITH_API_V1,
+  DEFAULT_FLAGSMITH_APP,
+  ReadConfig,
+} from "../common";
 import { readApiKey, readOrganisationId } from "./storage";
 
 const FLAGSMITH_API_V1 = process.env.FLAGSMITH_API_V1 || DEFAULT_FLAGSMITH_API_V1;
@@ -243,3 +249,8 @@ export const readEnvironmentFeatureState: ReadEnvironmentFeatureState = async ({
     return results[0] as EnvironmentFeatureState;
   }
 };
+
+/** Read frontend-visible configuration from runtime environment variables */
+export const readConfig: ReadConfig = async () => ({
+  flagsmithApp: process.env.FLAGSMITH_APP || DEFAULT_FLAGSMITH_APP,
+});
