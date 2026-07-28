@@ -51,20 +51,12 @@ jobs:
             echo "FLAGSMITH_BACKEND_HOST=${{ vars.FLAGSMITH_BACKEND_HOST }}" >> "$GITHUB_ENV"
           fi
       # Runtime variables: stored by Forge and read via process.env in functions.
-      # Set them when provided; otherwise unset any stale value so the code falls
-      # back to SaaS defaults. Unsetting is idempotent (|| true tolerates absence).
+      # Always set them; an empty value is falsy, so the code's `|| DEFAULT`
+      # fallback yields the SaaS defaults just as an unset variable would.
       - name: Set runtime variables
         run: |
-          if [ -n "${{ vars.FLAGSMITH_API_V1 }}" ]; then
-            forge variables set FLAGSMITH_API_V1 "${{ vars.FLAGSMITH_API_V1 }}" --environment ${{ inputs.environment }}
-          else
-            forge variables unset FLAGSMITH_API_V1 --environment ${{ inputs.environment }} || true
-          fi
-          if [ -n "${{ vars.FLAGSMITH_APP }}" ]; then
-            forge variables set FLAGSMITH_APP "${{ vars.FLAGSMITH_APP }}" --environment ${{ inputs.environment }}
-          else
-            forge variables unset FLAGSMITH_APP --environment ${{ inputs.environment }} || true
-          fi
+          forge variables set FLAGSMITH_API_V1 "${{ vars.FLAGSMITH_API_V1 }}" --environment ${{ inputs.environment }}
+          forge variables set FLAGSMITH_APP "${{ vars.FLAGSMITH_APP }}" --environment ${{ inputs.environment }}
 
       - name: Deploy
         run: forge deploy --environment ${{ inputs.environment }} --non-interactive
