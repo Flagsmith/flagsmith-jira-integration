@@ -55,8 +55,8 @@ jobs:
       # fallback yields the SaaS defaults just as an unset variable would.
       - name: Set runtime variables
         run: |
-          forge variables set FLAGSMITH_API_V1 "${{ vars.FLAGSMITH_API_V1 }}" --environment ${{ inputs.environment }}
-          forge variables set FLAGSMITH_APP "${{ vars.FLAGSMITH_APP }}" --environment ${{ inputs.environment }}
+          forge variables set FLAGSMITH_API_V1 "${{ vars.FLAGSMITH_API_V1 }}" --environment ${{ inputs.environment }} --non-interactive
+          forge variables set FLAGSMITH_APP "${{ vars.FLAGSMITH_APP }}" --environment ${{ inputs.environment }} --non-interactive
 
       - name: Deploy
         run: forge deploy --environment ${{ inputs.environment }} --non-interactive
