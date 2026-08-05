@@ -52,7 +52,7 @@ jobs:
           fi
       # Runtime variables: stored by Forge and read via process.env in functions.
       # Set each one from its per-environment GitHub variable when configured.
-      # When it is not, we skip it 
+      # When it is not, we skip it
       - name: Set runtime variables
         env:
           FLAGSMITH_API_V1: ${{ vars.FLAGSMITH_API_V1 }}
