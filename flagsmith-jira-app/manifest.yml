@@ -57,5 +57,5 @@ permissions:
         - ${FLAGSMITH_BACKEND_HOST}
 environment:
   variables:
-    - key: FORGE_APP_ID
-    - key: FLAGSMITH_BACKEND_HOST
+    - FORGE_APP_ID
+    - FLAGSMITH_BACKEND_HOST
