@@ -3,7 +3,7 @@ import { Fragment, useEffect, useState } from "react";
 
 import { ApiError, usePromise } from "../../common";
 import { canEditIssue } from "../auth";
-import { readConfig, readEnvironments, readFeatures } from "../flagsmith";
+import { readEnvironments, readFeatures } from "../flagsmith";
 import { readFeatureIds, readProjectIds, writeFeatureIds } from "../jira";
 
 import { WrappableComponentProps } from "./ErrorWrapper";
