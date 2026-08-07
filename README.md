@@ -8,7 +8,7 @@ tutorials explaining Forge.
 
 ## Required GitHub variables
 
-Set these on each GitHub environment 
+Set these on each GitHub environment
 
 - `FORGE_APP_ID` — e.g. `9ea1f892-1356-44bd-9ac8-684abf3a5714`
 - `FLAGSMITH_BACKEND_HOST` — e.g. `api.flagsmith.com`
