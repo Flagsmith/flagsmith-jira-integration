@@ -1,11 +1,6 @@
 import { RequestInit } from "@forge/api";
 import { useEffect, useState } from "react";
 
-// SaaS defaults; overridden per Forge environment via the FLAGSMITH_API_V1 and
-// FLAGSMITH_APP runtime variables (see src/backend/config.ts).
-export const DEFAULT_FLAGSMITH_API_V1 = "https://api.flagsmith.com/api/v1";
-export const DEFAULT_FLAGSMITH_APP = "https://app.flagsmith.com";
-
 export type ApiArgs = Partial<{
   method: RequestInit["method"];
   headers: RequestInit["headers"];

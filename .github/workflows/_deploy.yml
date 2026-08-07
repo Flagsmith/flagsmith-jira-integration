@@ -19,6 +19,9 @@ jobs:
     env:
       FORGE_EMAIL: ${{ vars.FORGE_EMAIL }}
       FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
+      # substituted into manifest.yml by the Forge CLI from the shell at deploy time.
+      FORGE_APP_ID: ${{ vars.FORGE_APP_ID }}
+      FLAGSMITH_BACKEND_HOST: ${{ vars.FLAGSMITH_BACKEND_HOST }}
     steps:
       - uses: actions/checkout@v7
 
@@ -40,27 +43,14 @@ jobs:
       - name: Install app dependencies
         run: npm ci
 
-      # Manifest variables: substituted into manifest.yml by the Forge CLI from
-      # the shell at deploy time. Only override the SaaS defaults when provided.
-      - name: Set manifest variables
-        run: |
-          if [ -n "${{ vars.FORGE_APP_ID }}" ]; then
-            echo "FORGE_APP_ID=${{ vars.FORGE_APP_ID }}" >> "$GITHUB_ENV"
-          fi
-          if [ -n "${{ vars.FLAGSMITH_BACKEND_HOST }}" ]; then
-            echo "FLAGSMITH_BACKEND_HOST=${{ vars.FLAGSMITH_BACKEND_HOST }}" >> "$GITHUB_ENV"
-          fi
       # Runtime variables: stored by Forge and read via process.env in functions.
-      # Set each one from its per-environment GitHub variable when configured.
-      # When it is not, we skip it
       - name: Set runtime variables
         env:
           FLAGSMITH_API_V1: ${{ vars.FLAGSMITH_API_V1 }}
           FLAGSMITH_APP: ${{ vars.FLAGSMITH_APP }}
         run: |
-          [ -n "$FLAGSMITH_API_V1" ] && forge variables set FLAGSMITH_API_V1 "$FLAGSMITH_API_V1" --environment ${{ inputs.environment }}
-          [ -n "$FLAGSMITH_APP" ] && forge variables set FLAGSMITH_APP "$FLAGSMITH_APP" --environment ${{ inputs.environment }}
-          true
+          forge variables set FLAGSMITH_API_V1 "$FLAGSMITH_API_V1" --environment ${{ inputs.environment }}
+          forge variables set FLAGSMITH_APP "$FLAGSMITH_APP" --environment ${{ inputs.environment }}
 
       - name: Deploy
         run: forge deploy --environment ${{ inputs.environment }} --non-interactive

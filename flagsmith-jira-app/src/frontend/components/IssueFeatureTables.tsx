@@ -13,7 +13,7 @@ import {
 } from "@forge/react";
 import { Fragment, useCallback, useState } from "react";
 
-import { DEFAULT_FLAGSMITH_APP, usePromise } from "../../common";
+import { usePromise } from "../../common";
 import { readConfig } from "../flagsmith";
 import {
   Environment,
@@ -297,9 +297,10 @@ const IssueFeatureTables = ({
   environmentsFeatures,
   issueFeatureIds,
 }: IssueFeatureTablesProps): JSX.Element => {
-  const [config = { flagsmithApp: DEFAULT_FLAGSMITH_APP }] = usePromise(readConfig, []);
+  const [config] = usePromise(readConfig, []);
 
   if (
+    config === undefined ||
     environmentsFeatures.length === 0 ||
     environmentsFeatures[0] === undefined ||
     issueFeatureIds.length === 0
