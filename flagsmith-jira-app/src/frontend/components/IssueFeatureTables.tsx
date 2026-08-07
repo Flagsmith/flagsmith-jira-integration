@@ -300,7 +300,6 @@ const IssueFeatureTables = ({
   const [config] = usePromise(readConfig, []);
 
   if (
-    config === undefined ||
     environmentsFeatures.length === 0 ||
     environmentsFeatures[0] === undefined ||
     issueFeatureIds.length === 0
@@ -335,7 +334,7 @@ const IssueFeatureTables = ({
             <IssueFeatureTable
               environments={matchingEnvironments}
               environmentFeatures={envFeaturesForThisFeature}
-              flagsmithApp={config.flagsmithApp}
+              flagsmithApp={config!.flagsmithApp}
             />
           </Fragment>
         ),
