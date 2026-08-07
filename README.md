@@ -1,10 +1,22 @@
-# Flagsmith Jira Integration
+s# Flagsmith Jira Integration
 
 This repository contains an outer folder to install and configure the Forge CLI with an inner folder containing the Jira
 app itself.
 
 See [developer.atlassian.com/platform/forge](https://developer.atlassian.com/platform/forge) for documentation and
 tutorials explaining Forge.
+
+## Required GitHub variables
+
+Set these on each GitHub environment
+
+- `FORGE_APP_ID` — e.g. `9ea1f892-1356-44bd-9ac8-684abf3a5714`
+- `FLAGSMITH_BACKEND_HOST` — e.g. `api.flagsmith.com`
+- `FLAGSMITH_API_V1` — e.g. `https://api.flagsmith.com/api/v1`
+- `FLAGSMITH_APP` — e.g. `https://app.flagsmith.com`
+- `FORGE_EMAIL` — Atlassian account email
+
+Plus the `FORGE_API_TOKEN` secret.
 
 ## Architectural decisions
 

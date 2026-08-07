@@ -5,6 +5,7 @@ import {
   ReadOrganisations,
   ReadProjects,
 } from "../backend/flagsmith";
+import type { ReadConfig } from "../common";
 import { customInvoke } from "./invoke";
 export {
   Environment,
@@ -35,3 +36,6 @@ export const readEnvironmentFeatureState: ReadEnvironmentFeatureState = async ({
   envApiKey,
   featureName,
 }) => customInvoke("readEnvironmentFeatureState", { envApiKey, featureName });
+
+/** Read frontend-visible configuration from the backend resolver */
+export const readConfig: ReadConfig = async () => customInvoke("readConfig");

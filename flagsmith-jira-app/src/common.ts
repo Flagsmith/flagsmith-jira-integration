@@ -1,10 +1,6 @@
 import { RequestInit } from "@forge/api";
 import { useEffect, useState } from "react";
 
-// TODO later: these could be set from environment variables for self-hosted users
-export const FLAGSMITH_API_V1 = "https://api.flagsmith.com/api/v1";
-export const FLAGSMITH_APP = "https://app.flagsmith.com";
-
 export type ApiArgs = Partial<{
   method: RequestInit["method"];
   headers: RequestInit["headers"];
@@ -23,6 +19,13 @@ export class ApiError extends Error {
 }
 
 export type ErrorPayload = { error: Error };
+
+/** Frontend-visible configuration passed back across the invoke bridge */
+export type Config = {
+  flagsmithApp: string;
+};
+
+export type ReadConfig = () => Promise<Config>;
 
 /** Use a promise safely i.e. ignore result if subsequently unmounted */
 export const usePromise = <T>(

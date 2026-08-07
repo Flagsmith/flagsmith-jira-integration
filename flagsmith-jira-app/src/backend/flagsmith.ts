@@ -1,7 +1,18 @@
 import api, { APIResponse, Route, assumeTrustedRoute, route } from "@forge/api";
 
-import { ApiArgs, ApiError, FLAGSMITH_API_V1 } from "../common";
+import { ApiArgs, ApiError, ReadConfig } from "../common";
 import { readApiKey, readOrganisationId } from "./storage";
+
+/** Read a runtime variable that is set per Forge environment at deploy time */
+const requireEnv = (key: string): string => {
+  const value = process.env[key];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value;
+};
+
+const FLAGSMITH_API_V1 = requireEnv("FLAGSMITH_API_V1");
 
 type Model = {
   id: number;
@@ -241,3 +252,8 @@ export const readEnvironmentFeatureState: ReadEnvironmentFeatureState = async ({
     return results[0] as EnvironmentFeatureState;
   }
 };
+
+/** Read frontend-visible configuration from runtime environment variables */
+export const readConfig: ReadConfig = async () => ({
+  flagsmithApp: requireEnv("FLAGSMITH_APP"),
+});
