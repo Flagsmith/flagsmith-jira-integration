@@ -17,8 +17,8 @@ jobs:
       run:
         working-directory: flagsmith-jira-app
     env:
-      FORGE_EMAIL: ${{ vars.FORGE_EMAIL }}
-      FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
+      FORGE_EMAIL: ${{ vars.JIRA_FORGE_EMAIL }}
+      FORGE_API_TOKEN: ${{ secrets.JIRA_FORGE_API_TOKEN }}
       # substituted into manifest.yml by the Forge CLI from the shell at deploy time.
       FORGE_APP_ID: ${{ vars.FORGE_APP_ID }}
       FLAGSMITH_BACKEND_HOST: ${{ vars.FLAGSMITH_BACKEND_HOST }}

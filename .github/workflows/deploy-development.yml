@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    uses: ./.github/workflows/_deploy.yml
+    uses: ./.github/workflows/_deploy-jira-integration.yml
     with:
       environment: development
     secrets: inherit
