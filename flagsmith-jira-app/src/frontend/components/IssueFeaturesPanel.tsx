@@ -124,16 +124,15 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
     }
   };
 
+  // note: undefined means still loading; empty arrays mean loaded but no data,
+  // which is reported to the user by the form rather than shown as loading
   const ready =
     extension !== undefined &&
     projectIds !== undefined &&
     projectIds.length > 0 &&
     featureIds !== undefined &&
     environments !== undefined &&
-    environmentsFeatures !== undefined &&
-    environmentsFeatures.length > 0 &&
-    environmentsFeatures[0] !== undefined &&
-    environmentsFeatures[0].length > 0;
+    environmentsFeatures !== undefined;
 
   return ready ? (
     <Fragment>
