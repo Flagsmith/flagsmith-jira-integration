@@ -47,8 +47,8 @@ jobs:
       # Runtime variables: stored by Forge and read via process.env in functions.
       - name: Set runtime variables
         env:
-          FLAGSMITH_API_V1: ${{ vars.FLAGSMITH_API_V1 }}
-          FLAGSMITH_APP: ${{ vars.FLAGSMITH_APP }}
+          FLAGSMITH_API_V1: ${{ vars.JIRA_FLAGSMITH_API_V1 }}
+          FLAGSMITH_APP: ${{ vars.JIRA_FLAGSMITH_APP }}
         run: |
           forge variables set FLAGSMITH_API_V1 "$FLAGSMITH_API_V1" --environment ${{ inputs.environment }}
           forge variables set FLAGSMITH_APP "$FLAGSMITH_APP" --environment ${{ inputs.environment }}
