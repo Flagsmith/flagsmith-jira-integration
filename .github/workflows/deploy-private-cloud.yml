@@ -2,6 +2,8 @@ name: Deploy to private cloud
 
 on:
   push:
+    # TEMPORARY: lets this run from the branch before merge. Remove before merging.
+    branches: [feat/switch-to-github-variables]
     tags:
       - "v*"
 
@@ -22,6 +24,7 @@ jobs:
           repositories: infrastructure
           # Only what POST /repos/{owner}/{repo}/dispatches needs.
           permission-contents: write
+          permission-actions: write # TEMPORARY: workflow_dispatch needs it
 
       # Triggers deploy-jira-integration-private-cloud.yml in
       # Flagsmith/infrastructure, which deploys this tag to every private cloud
@@ -30,7 +33,13 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REF: ${{ github.ref_name }}
+        # TEMPORARY: repository_dispatch only runs the workflow as it exists on
+        # infrastructure's default branch. Restore the commented-out call below,
+        # and drop the workflow_dispatch one, before merging.
         run: |
           jq -n --arg ref "$REF" \
-            '{event_type: "jira-integration-released", client_payload: {ref: $ref}}' \
-            | gh api --method POST /repos/Flagsmith/infrastructure/dispatches --input -
+            '{ref: "feat/pricate-cloud-jira-integration-ci", inputs: {ref: $ref}}' \
+            | gh api --method POST /repos/Flagsmith/infrastructure/actions/workflows/deploy-jira-integration-private-cloud.yml/dispatches --input -
+          # jq -n --arg ref "$REF" \
+          #   '{event_type: "jira-integration-released", client_payload: {ref: $ref}}' \
+          #   | gh api --method POST /repos/Flagsmith/infrastructure/dispatches --input -
