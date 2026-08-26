@@ -10,8 +10,6 @@ jobs:
     name: Trigger private cloud deployments
     runs-on: ubuntu-latest
     steps:
-      # The default GITHUB_TOKEN is scoped to this repository, so it cannot
-      # dispatch events to Flagsmith/infrastructure.
       - name: Generate GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -20,12 +18,10 @@ jobs:
           private-key: ${{ secrets.FLAGSMITH_ENGINEERING_GH_APP_PRIVATE_KEY }}
           owner: Flagsmith
           repositories: infrastructure
-          # Only what POST /repos/{owner}/{repo}/dispatches needs.
           permission-contents: write
 
       # Triggers deploy-jira-integration-private-cloud.yml in
-      # Flagsmith/infrastructure, which deploys this tag to every private cloud
-      # environment.
+      # Flagsmith/infrastructure
       - name: Send repository_dispatch to Flagsmith/infrastructure
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
