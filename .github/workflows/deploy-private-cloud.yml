@@ -1,0 +1,32 @@
+name: Deploy to private cloud
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  dispatch:
+    name: Trigger private cloud deployments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.FLAGSMITH_ENGINEERING_GH_APP_ID }}
+          private-key: ${{ secrets.FLAGSMITH_ENGINEERING_GH_APP_PRIVATE_KEY }}
+          owner: Flagsmith
+          repositories: infrastructure
+          permission-contents: write
+
+      # Triggers deploy-jira-integration-private-cloud.yml in
+      # Flagsmith/infrastructure
+      - name: Send repository_dispatch to Flagsmith/infrastructure
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REF: ${{ github.ref_name }}
+        run: |
+          jq -n --arg ref "$REF" \
+            '{event_type: "jira-integration-released", client_payload: {ref: $ref}}' \
+            | gh api --method POST /repos/Flagsmith/infrastructure/dispatches --input -

@@ -17,11 +17,12 @@ jobs:
       run:
         working-directory: flagsmith-jira-app
     env:
-      FORGE_EMAIL: ${{ vars.FORGE_EMAIL }}
-      FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
-      # substituted into manifest.yml by the Forge CLI from the shell at deploy time.
-      FORGE_APP_ID: ${{ vars.FORGE_APP_ID }}
-      FLAGSMITH_BACKEND_HOST: ${{ vars.FLAGSMITH_BACKEND_HOST }}
+      FORGE_EMAIL: ${{ vars.JIRA_FORGE_EMAIL }}
+      FORGE_API_TOKEN: ${{ secrets.JIRA_FORGE_API_TOKEN }}
+      FORGE_APP_ID: ${{ vars.JIRA_FORGE_APP_ID }}
+      FLAGSMITH_BACKEND_HOST: ${{ vars.JIRA_FLAGSMITH_BACKEND_HOST }}
+      FLAGSMITH_API_V1: ${{ vars.JIRA_FLAGSMITH_API_V1 }}
+      FLAGSMITH_APP: ${{ vars.JIRA_FLAGSMITH_APP }}
     steps:
       - uses: actions/checkout@v7
 
@@ -31,23 +32,15 @@ jobs:
           cache: npm
           cache-dependency-path: flagsmith-jira-app/package-lock.json
 
-      - name: Upgrade npm
-        run: npm install -g npm@11
-
-      - name: Install Forge CLI
-        run: npm install -g @forge/cli@12
+      - name: Install toolchain
+        run: |
+          npm install -g @forge/cli@12
+          npm ci
 
       - name: Opt out of Forge usage analytics
         run: forge settings set usage-analytics false
 
-      - name: Install app dependencies
-        run: npm ci
-
-      # Runtime variables: stored by Forge and read via process.env in functions.
       - name: Set runtime variables
-        env:
-          FLAGSMITH_API_V1: ${{ vars.FLAGSMITH_API_V1 }}
-          FLAGSMITH_APP: ${{ vars.FLAGSMITH_APP }}
         run: |
           forge variables set FLAGSMITH_API_V1 "$FLAGSMITH_API_V1" --environment ${{ inputs.environment }}
           forge variables set FLAGSMITH_APP "$FLAGSMITH_APP" --environment ${{ inputs.environment }}
