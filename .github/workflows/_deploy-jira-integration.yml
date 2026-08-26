@@ -41,7 +41,7 @@ jobs:
 
       - name: Install app dependencies
         run: npm ci
-        
+
       - name: Set runtime variables
         env:
           FLAGSMITH_API_V1: ${{ vars.JIRA_FLAGSMITH_API_V1 }}
