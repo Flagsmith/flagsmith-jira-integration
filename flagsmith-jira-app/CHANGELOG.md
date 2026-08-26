@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.0](https://github.com/Flagsmith/flagsmith-jira-integration/compare/v1.1.10...v1.2.0) (2026-08-26)
+
+
+### Features
+
+* removed hard-coded configuration parameters in preparation for automated client deployment ([#65](https://github.com/Flagsmith/flagsmith-jira-integration/issues/65)) ([d2ce350](https://github.com/Flagsmith/flagsmith-jira-integration/commit/d2ce35037ce6b3c4e1e489c04f476dd23321921b))
+
+
+### Dependency Updates
+
+* bump fast-uri from 3.1.2 to 3.1.5 in /flagsmith-jira-app ([#70](https://github.com/Flagsmith/flagsmith-jira-integration/issues/70)) ([3992916](https://github.com/Flagsmith/flagsmith-jira-integration/commit/3992916b72da78a17ea87603a125bcc39200a7fa))
+* bump undici from 7.28.0 to 7.29.0 in /flagsmith-jira-app ([#69](https://github.com/Flagsmith/flagsmith-jira-integration/issues/69)) ([c556300](https://github.com/Flagsmith/flagsmith-jira-integration/commit/c556300327746c65170446db5f55d5f7ea5c9299))
+
+
+### Other
+
+* **deps:** bump brace-expansion from 2.1.1 to 2.1.4 in /flagsmith-jira-app ([#78](https://github.com/Flagsmith/flagsmith-jira-integration/issues/78)) ([680f173](https://github.com/Flagsmith/flagsmith-jira-integration/commit/680f173d2c90df174ac29a683b75629d3487b896))
+* **deps:** bump linkify-it and @forge/react in /flagsmith-jira-app ([#77](https://github.com/Flagsmith/flagsmith-jira-integration/issues/77)) ([d58f662](https://github.com/Flagsmith/flagsmith-jira-integration/commit/d58f662a2f91c438e9007696057d7354b868f0a6))
+
 ## [1.1.10](https://github.com/Flagsmith/flagsmith-jira-integration/compare/v1.1.9...v1.1.10) (2026-06-30)
 
 
