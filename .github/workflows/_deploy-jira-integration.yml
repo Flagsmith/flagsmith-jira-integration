@@ -19,7 +19,6 @@ jobs:
     env:
       FORGE_EMAIL: ${{ vars.JIRA_FORGE_EMAIL }}
       FORGE_API_TOKEN: ${{ secrets.JIRA_FORGE_API_TOKEN }}
-      # substituted into manifest.yml by the Forge CLI from the shell at deploy time
       FORGE_APP_ID: ${{ vars.JIRA_FORGE_APP_ID }}
       FLAGSMITH_BACKEND_HOST: ${{ vars.JIRA_FLAGSMITH_BACKEND_HOST }}
     steps:
@@ -42,8 +41,7 @@ jobs:
 
       - name: Install app dependencies
         run: npm ci
-
-      # Runtime variables: stored by Forge and read via process.env in functions.
+        
       - name: Set runtime variables
         env:
           FLAGSMITH_API_V1: ${{ vars.JIRA_FLAGSMITH_API_V1 }}
