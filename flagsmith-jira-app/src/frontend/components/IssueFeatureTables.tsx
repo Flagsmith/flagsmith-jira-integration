@@ -14,7 +14,6 @@ import {
 import { Fragment, useCallback, useState } from "react";
 
 import { usePromise } from "../../common";
-import { readConfig } from "../flagsmith";
 import {
   Environment,
   EnvironmentFeatureState,
@@ -290,15 +289,15 @@ type IssueFeatureTablesProps = {
   environments: Environment[];
   environmentsFeatures: Feature[][];
   issueFeatureIds: string[];
+  flagsmithApp: string;
 };
 
 const IssueFeatureTables = ({
   environments,
   environmentsFeatures,
   issueFeatureIds,
+  flagsmithApp,
 }: IssueFeatureTablesProps): JSX.Element => {
-  const [config] = usePromise(readConfig, []);
-
   if (
     environmentsFeatures.length === 0 ||
     environmentsFeatures[0] === undefined ||
@@ -334,7 +333,7 @@ const IssueFeatureTables = ({
             <IssueFeatureTable
               environments={matchingEnvironments}
               environmentFeatures={envFeaturesForThisFeature}
-              flagsmithApp={config!.flagsmithApp}
+              flagsmithApp={flagsmithApp}
             />
           </Fragment>
         ),
