@@ -3,7 +3,7 @@ import { Fragment, useEffect, useState } from "react";
 
 import { ApiError, usePromise } from "../../common";
 import { canEditIssue } from "../auth";
-import { readEnvironments, readFeatures } from "../flagsmith";
+import { readConfig, readEnvironments, readFeatures } from "../flagsmith";
 import { readFeatureIds, readProjectIds, writeFeatureIds } from "../jira";
 
 import { WrappableComponentProps } from "./ErrorWrapper";
@@ -14,6 +14,8 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   // get project context extension
   const context = useProductContext();
   const extension = context?.extension;
+
+  const [config] = usePromise(readConfig, [], setError);
 
   // get Flagsmith project ID from Jira project
   const [projectIds] = usePromise(
@@ -126,6 +128,7 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
 
   const ready =
     extension !== undefined &&
+    config !== undefined &&
     projectIds !== undefined &&
     projectIds.length > 0 &&
     featureIds !== undefined &&
@@ -154,6 +157,7 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         environments={environments}
         environmentsFeatures={environmentsFeatures}
         issueFeatureIds={featureIds}
+        flagsmithApp={config.flagsmithApp}
       />
     </Fragment>
   ) : (
