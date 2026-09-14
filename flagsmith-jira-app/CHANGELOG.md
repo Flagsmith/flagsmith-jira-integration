@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/Flagsmith/flagsmith-jira-integration/compare/v1.2.0...v1.2.1) (2026-09-14)
+
+
+### Bug Fixes
+
+* wait for config before rendering feature tables ([#83](https://github.com/Flagsmith/flagsmith-jira-integration/issues/83)) ([d8c6322](https://github.com/Flagsmith/flagsmith-jira-integration/commit/d8c632223b8852b5d523a04d32b6113bfe561599))
+
 ## [1.2.0](https://github.com/Flagsmith/flagsmith-jira-integration/compare/v1.1.10...v1.2.0) (2026-08-26)
 
 
