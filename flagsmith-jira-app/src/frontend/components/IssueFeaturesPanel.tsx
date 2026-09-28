@@ -126,7 +126,6 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
     }
   };
 
-
   const ready =
     extension !== undefined &&
     config !== undefined &&
