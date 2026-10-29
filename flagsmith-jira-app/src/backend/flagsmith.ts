@@ -1,6 +1,6 @@
 import api, { APIResponse, Route, assumeTrustedRoute, route } from "@forge/api";
 
-import { ApiArgs, ApiError, ReadConfig } from "../common";
+import { ApiArgs, ApiError, ReadConfig, isOrganisationApiKey } from "../common";
 import { readApiKey, readOrganisationId } from "./storage";
 
 /** Read a runtime variable that is set per Forge environment at deploy time */
@@ -79,8 +79,7 @@ const flagsmithApi = async (
       method,
       headers: {
         Accept: "application/json",
-        // TODO later: change to Api-Key ${apiKey} to use RBAC tokens
-        Authorization: `Token ${apiKey}`,
+        Authorization: `${isOrganisationApiKey(apiKey) ? "Api-Key" : "Token"} ${apiKey}`,
         ...headers,
       },
       ...(body ? { body } : {}),

@@ -10,15 +10,14 @@ import {
   Label,
   Lozenge,
   RequiredAsterisk,
-  Select,
   Spinner,
   Strong,
   Text,
   Textfield,
 } from "@forge/react";
-import { Fragment, useEffect, useId, useMemo, useState } from "react";
+import { Fragment, useEffect, useId, useState } from "react";
 
-import { ApiError, usePromise } from "../../common";
+import { ApiError, isOrganisationApiKey, usePromise } from "../../common";
 import { readOrganisations, readProjects } from "../flagsmith";
 import {
   deleteApiKey,
@@ -29,9 +28,6 @@ import {
   writeOrganisationId,
 } from "../storage";
 import { WrappableComponentProps } from "./ErrorWrapper";
-
-// 40 chars, same length as API key
-const SENTINEL = "****************************************";
 
 type AppSettingsFormProps = WrappableComponentProps & {
   hasApiKey: boolean;
@@ -46,24 +42,25 @@ const AppSettingsForm = ({
   saveOrganisationId,
   ...props
 }: AppSettingsFormProps): JSX.Element => {
-  // set form state from props
-  const [apiKey, setApiKey] = useState<string | null>(props.hasApiKey ? SENTINEL : null);
+  const [apiKey, setApiKey] = useState("");
   useEffect(() => {
-    setApiKey(props.hasApiKey ? SENTINEL : null);
+    setApiKey("");
   }, [props.hasApiKey]);
+  const usingStoredApiKey = props.hasApiKey && apiKey === "";
 
   const [organisationId, setOrganisationId] = useState<string | null>(props.organisationId);
   useEffect(() => {
     setOrganisationId(props.organisationId);
   }, [props.organisationId]);
 
-  // get organisations from Flagsmith API (or empty list if missing/invalid API key)
   const [organisations] = usePromise(
     async () => {
       try {
-        if (apiKey && apiKey.length === 40) {
-          // use stored API key if current value is sentinel i.e. unchanged
-          return await readOrganisations(apiKey === SENTINEL ? {} : { apiKey });
+        if (usingStoredApiKey) {
+          return await readOrganisations({});
+        }
+        if (isOrganisationApiKey(apiKey)) {
+          return await readOrganisations({ apiKey });
         }
       } catch (error) {
         // ignore 401 (invalid API key) and 404 (no organisations) as that is handled by the form
@@ -77,7 +74,7 @@ const AppSettingsForm = ({
       // always return empty list
       return [];
     },
-    [apiKey],
+    [apiKey, props.hasApiKey],
     setError,
   );
 
@@ -89,8 +86,8 @@ const AppSettingsForm = ({
   // update organisationId when organisations change
   useEffect(() => {
     if (organisations && !organisation) {
-      if (organisations.length > 1) {
-        // ...select first organisation (if any)
+      if (organisations.length > 0) {
+        // ...select first organisation (if any) e.g. the only organisation of an organisation API key
         const organisationId = String(organisations[0]?.id);
         setOrganisationId(organisationId);
       } else {
@@ -118,24 +115,13 @@ const AppSettingsForm = ({
   const apiKeyInputId = useId();
 
   const organisationInputId = useId();
-  const organisationOptions = useMemo(
-    () =>
-      organisations?.map((each) => ({
-        label: each.name,
-        value: String(each.id),
-      })),
-    [organisations],
-  );
-
-  const organisationValue =
-    organisationOptions?.find((option) => option.value === organisationId) ?? null;
 
   if (organisations === undefined) {
     return <Spinner label="Loading organisations" />;
   }
 
   const onSave = async () => {
-    if (apiKey !== SENTINEL) await saveApiKey(apiKey ?? "");
+    if (!usingStoredApiKey) await saveApiKey(apiKey);
     await saveOrganisationId(organisationId ?? "");
   };
 
@@ -183,32 +169,28 @@ const AppSettingsForm = ({
             id={apiKeyInputId}
             type="password"
             isRequired
-            minLength={40}
-            maxLength={40}
-            value={apiKey ?? ""}
+            minLength={41}
+            maxLength={41}
+            placeholder={props.hasApiKey ? "Key saved, enter a new key to replace it" : ""}
+            value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
           />
-          <HelperMessage>Enter your Flagsmith API key</HelperMessage>
+          <HelperMessage>Enter your Flagsmith Organisation API key</HelperMessage>
         </FormSection>
-        {!!organisationOptions && (
+        {!!organisation && (
           <FormSection>
-            <Label labelFor={organisationInputId}>
-              Organisation
-              <RequiredAsterisk />
-            </Label>
-            <Select
-              id={organisationInputId}
-              isRequired
-              options={organisationOptions}
-              value={organisationValue}
-              onChange={(option) => setOrganisationId(option.value)}
-            />
-            <HelperMessage>Choose your Flagsmith organisation</HelperMessage>
+            <Label labelFor={organisationInputId}>Organisation</Label>
+            <Textfield id={organisationInputId} isReadOnly value={organisation.name} />
+            <HelperMessage>The Flagsmith organisation this API key belongs to</HelperMessage>
           </FormSection>
         )}
         <FormFooter>
           <ButtonGroup label="Form actions">
-            <Button onClick={onSave} appearance="primary" isDisabled={apiKey?.length !== 40}>
+            <Button
+              onClick={onSave}
+              appearance="primary"
+              isDisabled={!usingStoredApiKey && !isOrganisationApiKey(apiKey)}
+            >
               Save
             </Button>
             <Button onClick={onClear}>Clear</Button>
