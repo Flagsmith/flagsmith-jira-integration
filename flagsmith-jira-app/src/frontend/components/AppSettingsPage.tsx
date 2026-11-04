@@ -87,8 +87,7 @@ const AppSettingsForm = ({
   // update organisationId when organisations change
   useEffect(() => {
     if (organisations && !organisation) {
-      if (organisations.length > 0) {
-        // ...select first organisation (if any) e.g. the only organisation of an organisation API key
+      if (organisations.length === 1) {
         const organisationId = String(organisations[0]?.id);
         setOrganisationId(organisationId);
       } else {
