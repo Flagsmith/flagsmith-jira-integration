@@ -165,7 +165,7 @@ const AppSettingsForm = ({
         </Inline>
       </Box>
       {organisations.length > 1 && (
-        <SectionMessage appearance="warning" title="Legacy API key">
+        <SectionMessage appearance="warning" title="Deprecated API key">
           <Text>
            Please replace your User API key with an Organisation API key.
           </Text>
