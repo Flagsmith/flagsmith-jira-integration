@@ -10,6 +10,7 @@ import {
   Label,
   Lozenge,
   RequiredAsterisk,
+  SectionMessage,
   Spinner,
   Strong,
   Text,
@@ -121,7 +122,11 @@ const AppSettingsForm = ({
   }
 
   const onSave = async () => {
-    if (!usingStoredApiKey) await saveApiKey(apiKey);
+    try {
+      if (!usingStoredApiKey) await saveApiKey(apiKey);
+    } catch {
+      return; 
+    }
     await saveOrganisationId(organisationId ?? "");
   };
 
@@ -159,6 +164,13 @@ const AppSettingsForm = ({
           {configured && <Lozenge appearance="success">Connected</Lozenge>}
         </Inline>
       </Box>
+      {organisations.length > 1 && (
+        <SectionMessage appearance="warning" title="Legacy API key">
+          <Text>
+           Please replace your User API key with an Organisation API key.
+          </Text>
+        </SectionMessage>
+      )}
       <Form onSubmit={Promise.resolve}>
         <FormSection>
           <Label labelFor={apiKeyInputId}>
@@ -189,7 +201,7 @@ const AppSettingsForm = ({
             <Button
               onClick={onSave}
               appearance="primary"
-              isDisabled={!usingStoredApiKey && !isOrganisationApiKey(apiKey)}
+              isDisabled={!usingStoredApiKey && (!isOrganisationApiKey(apiKey) || !organisation)}
             >
               Save
             </Button>
@@ -222,6 +234,7 @@ const AppSettingsPage = ({ setError }: WrappableComponentProps): JSX.Element => 
       }
     } catch (error) {
       setError(error as Error);
+      throw error;
     }
     setHasApiKey(!!apiKey);
   };
