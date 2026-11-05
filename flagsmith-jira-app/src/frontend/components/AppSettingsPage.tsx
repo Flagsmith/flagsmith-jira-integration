@@ -198,7 +198,7 @@ const AppSettingsForm = ({
             <Button
               onClick={onSave}
               appearance="primary"
-              isDisabled={!usingStoredApiKey && (!isOrganisationApiKey(apiKey) || !organisation)}
+              isDisabled={!organisation || (!usingStoredApiKey && !isOrganisationApiKey(apiKey))}
             >
               Save
             </Button>
