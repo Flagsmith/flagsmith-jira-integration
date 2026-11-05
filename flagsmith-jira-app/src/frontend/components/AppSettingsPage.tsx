@@ -124,7 +124,7 @@ const AppSettingsForm = ({
     try {
       if (!usingStoredApiKey) await saveApiKey(apiKey);
     } catch {
-      return; 
+      return;
     }
     await saveOrganisationId(organisationId ?? "");
   };
@@ -165,9 +165,7 @@ const AppSettingsForm = ({
       </Box>
       {organisations.length > 1 && (
         <SectionMessage appearance="warning" title="Deprecated API key">
-          <Text>
-           Please replace your User API key with an Organisation API key.
-          </Text>
+          <Text>Please replace your User API key with an Organisation API key.</Text>
         </SectionMessage>
       )}
       <Form onSubmit={Promise.resolve}>
