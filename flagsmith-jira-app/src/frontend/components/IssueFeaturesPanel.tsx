@@ -64,14 +64,13 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
   // get environments from Flagsmith API
   const [environments] = usePromise(
     async () => {
+      if (projectIds === undefined) return undefined; // still loading
+      if (projectIds.length === 0) return [];
       try {
-        if (projectIds && projectIds.length > 0) {
-          const all = await Promise.all(
-            projectIds.map((projectId) => readEnvironments({ projectId })),
-          );
-          return all.flat(); // Combine all environments into one flat array
-        }
-        return [];
+        const all = await Promise.all(
+          projectIds.map((projectId) => readEnvironments({ projectId })),
+        );
+        return all.flat(); // Combine all environments into one flat array
       } catch (error) {
         if (
           !Object.prototype.hasOwnProperty.call(error, "code") ||
@@ -107,7 +106,7 @@ const IssueFeaturesPanel = ({ setError }: WrappableComponentProps): JSX.Element 
         ) {
           setError(error as Error);
         }
-        return [];
+        return environments?.map(() => []) ?? [];
       }
     },
     [projectIds, environments],
