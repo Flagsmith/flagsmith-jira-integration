@@ -20,6 +20,12 @@ export class ApiError extends Error {
 
 export type ErrorPayload = { error: Error };
 
+/** Organisation API keys are `<8-char prefix>.<32-char secret>` */
+const ORGANISATION_API_KEY_PATTERN = /^[A-Za-z0-9]{8}\.[A-Za-z0-9]{32}$/;
+
+export const isOrganisationApiKey = (apiKey: string): boolean =>
+  ORGANISATION_API_KEY_PATTERN.test(apiKey);
+
 /** Frontend-visible configuration passed back across the invoke bridge */
 export type Config = {
   flagsmithApp: string;

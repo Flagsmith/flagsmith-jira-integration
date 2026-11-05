@@ -17,7 +17,7 @@ import {
   writeApiKey,
   writeOrganisationId,
 } from "./backend/storage";
-import { ApiError, ErrorPayload } from "./common";
+import { ApiError, ErrorPayload, isOrganisationApiKey } from "./common";
 
 /** Return errors and their properties to frontend without Forge mangling them */
 const returnError = (error: Error): ErrorPayload => ({
@@ -52,7 +52,12 @@ resolver
 resolver
   .define("writeApiKey", async ({ payload: { apiKey } }) =>
     checkPermission(canAdministrate)
-      .then(() => writeApiKey({ apiKey }))
+      .then(() => {
+        if (!isOrganisationApiKey(apiKey)) {
+          throw new ApiError("Only organisation API keys are supported", 400);
+        }
+        return writeApiKey({ apiKey });
+      })
       .catch(returnError),
   )
   .define("writeOrganisationId", async ({ payload: { organisationId } }) =>
