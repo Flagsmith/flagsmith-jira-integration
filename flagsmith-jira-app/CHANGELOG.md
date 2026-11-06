@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.0](https://github.com/Flagsmith/flagsmith-jira-integration/compare/v1.2.1...v1.3.0) (2026-11-06)
+
+
+### Features
+
+* replace user with org API keys ([#89](https://github.com/Flagsmith/flagsmith-jira-integration/issues/89)) ([60645ee](https://github.com/Flagsmith/flagsmith-jira-integration/commit/60645ee6a19d98291d1da21c21a7d15dd4c21967))
+
+
+### Bug Fixes
+
+* when connected project(s) don't have any features a loading spinner pops up instead of warning ([#75](https://github.com/Flagsmith/flagsmith-jira-integration/issues/75)) ([74fa8ee](https://github.com/Flagsmith/flagsmith-jira-integration/commit/74fa8ee463705062791f0f46bad28cfc542f6a33))
+
+
+### Other
+
+* **deps:** bump fast-uri from 3.1.6 to 3.1.9 in /flagsmith-jira-app ([#90](https://github.com/Flagsmith/flagsmith-jira-integration/issues/90)) ([e6ac682](https://github.com/Flagsmith/flagsmith-jira-integration/commit/e6ac68227453c330ea67fcbf6561b033bf9c5c2a))
+* **deps:** bump markdown-it from 14.3.0 to 14.3.3 in /flagsmith-jira-app ([#88](https://github.com/Flagsmith/flagsmith-jira-integration/issues/88)) ([43c67f8](https://github.com/Flagsmith/flagsmith-jira-integration/commit/43c67f838f4c48341e178271608fc94fd34f901e))
+* **deps:** bump undici from 7.29.0 to 7.30.1 in /flagsmith-jira-app ([#91](https://github.com/Flagsmith/flagsmith-jira-integration/issues/91)) ([6a3a2ed](https://github.com/Flagsmith/flagsmith-jira-integration/commit/6a3a2edb9dfc82e7cb06e40dc09dbb93a88a4edd))
+
 ## [1.2.1](https://github.com/Flagsmith/flagsmith-jira-integration/compare/v1.2.0...v1.2.1) (2026-09-14)
 
 
